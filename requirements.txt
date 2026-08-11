@@ -1,0 +1,8 @@
+# to build proto
+grpcio-tools
+protoc-gen-connectrpc
+
+# to run API server
+connectrpc
+fastapi
+uvicorn
