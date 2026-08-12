@@ -1,28 +1,25 @@
-import fastapi
 import os
-import sys
+
+import fastapi
 import uvicorn
 
-from connectrpc.request import RequestContext
-from connectrpc.compat import google_protobuf_codecs
-
-from protos import api_connect, api_pb2
+from protos import api_connect
 from shared.settings import settings
 
-
-class GreetingService(api_connect.GreetingService):
-    async def greet(
-        self, request: api_pb2.GreetRequest, ctx: RequestContext
-    ) -> api_pb2.GreetResponse:
-        del ctx
-        name = request.name.strip() or "world"
-        return api_pb2.GreetResponse(message=f"Hello, {name}!")
+try:
+    from .account_service import AccountService
+    from .greeting_service import GreetingService
+except ImportError:
+    from account_service import AccountService
+    from greeting_service import GreetingService
 
 
 def create_app():
     app = fastapi.FastAPI()
     greeting_service_app = api_connect.GreetingServiceASGIApplication(GreetingService())
+    account_service_app = api_connect.AccountServiceASGIApplication(AccountService())
     app.mount('/app.v1.GreetingService', greeting_service_app)
+    app.mount('/app.v1.AccountService', account_service_app)
     for route in app.routes:
         print(f'Registered route: {route.path}')
 

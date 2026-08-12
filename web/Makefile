@@ -3,9 +3,11 @@
 all: run
 
 setup:
-	rm -rf node_modulesnpm install
+	rm -rf node_modules
+	npm install
 
 run:
+	echo -ne "\e]0;web\a"
 	npm run dev
 
 build:
