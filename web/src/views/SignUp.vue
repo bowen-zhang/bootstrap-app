@@ -60,6 +60,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAccountService } from '@/libs/api'
+import { login } from '@/libs/user'
 
 const router = useRouter()
 const firstName = ref('')
@@ -93,12 +94,7 @@ async function handleSignUp() {
       password: trimmedPassword,
     })
 
-    successMessage.value = 'Account created successfully.'
-    firstName.value = ''
-    lastName.value = ''
-    email.value = ''
-    password.value = ''
-    await router.push('/')
+    await login(trimmedEmail, trimmedPassword);
   } catch (error) {
     successMessage.value = ''
     errorMessage.value = error instanceof Error ? error.message : 'Unable to create account.'

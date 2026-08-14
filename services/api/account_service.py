@@ -1,13 +1,12 @@
-import jwt
 import uuid
-from typing import Optional
 
 from connectrpc.request import RequestContext
 from fastapi import HTTPException
-from http.cookies import SimpleCookie
 
 from protos import api_connect, api_pb2, storage_pb2
 from services.api import auth_utils
+from services.api.connectrpc_utils import _get_cookie, _set_cookie
+from shared.settings import settings
 
 
 class AccountService(api_connect.AccountService):
@@ -67,16 +66,7 @@ class AccountService(api_connect.AccountService):
     async def refresh_token(
         self, request: api_pb2.RefreshTokenRequest, ctx: RequestContext
     ) -> api_pb2.RefreshTokenResponse:
-        raw_cookie_header = ctx.request_headers().get("cookie")
-        if not raw_cookie_header:
-            raise HTTPException(status_code=401, detail="No cookies found in request")
-
-        cookie = SimpleCookie()
-        cookie.load(raw_cookie_header)
-        if "refresh_token" not in cookie:
-            raise HTTPException(status_code=401, detail="Refresh token cookie not found")
-
-        refresh_token = cookie["refresh_token"].value
+        refresh_token = _get_cookie(ctx, "refresh_token")
         if not refresh_token:
             raise HTTPException(status_code=401, detail="Refresh token missing")
 
@@ -96,75 +86,48 @@ class AccountService(api_connect.AccountService):
         return api_pb2.LogoutResponse()
 
     def _set_tokens(self, user_id: str, ctx: RequestContext) -> None:
-        access_token = auth_utils.create_access_token(user_id)
-        refresh_token = auth_utils.create_refresh_token(user_id)
-
-        access_token_cookie = self._build_cookie(
+        _set_cookie(
+            ctx,
             name="access_token",
-            value=access_token,
+            value=auth_utils.create_access_token(user_id),
             path="/",
             httponly=True,
             secure=True,
-            samesite="Strict"
+            samesite="Strict",
+            max_age=settings.jwt_settings.access_token_expiration_seconds
         )
-        refresh_token_cookie = self._build_cookie(
+        _set_cookie(
+            ctx,
             name="refresh_token",
-            value=refresh_token,
+            value=auth_utils.create_refresh_token(user_id),
             path="/api/app.v1.AccountingService/RefreshToken",
             httponly=True,
             secure=True,
-            samesite="Strict"
+            samesite="Strict",
+            max_age=settings.jwt_settings.refresh_token_expiration_seconds
         )
-
-        ctx.response_headers.add("Set-Cookie", access_token_cookie)
-        ctx.response_headers.add("Set-Cookie", refresh_token_cookie)
 
         print(f"Set access_token and refresh_token cookies for user_id: {user_id}")
 
     def _clear_tokens(self, ctx: RequestContext) -> None:
-        cookies = [
-            self._build_cookie(
-                name="access_token",
-                value="",
-                path="/",
-                httponly=True,
-                secure=True,
-                samesite="Strict",
-                max_age=0
-            ),
-            self._build_cookie(
-                name="refresh_token",
-                value="",
-                path="/api/app.v1.AccountingService/RefreshToken",
-                httponly=True,
-                secure=True,
-                samesite="Strict",
-                max_age=0
-            )
-        ]
-        ctx.response_headers["Set-Cookie"] = '\n'.join(cookies)
+        _set_cookie(
+            ctx,
+            name="access_token",
+            value="",
+            path="/",
+            httponly=True,
+            secure=True,
+            samesite="Strict",
+            max_age=0
+        )
+        _set_cookie(
+            ctx,
+            name="refresh_token",
+            value="",
+            path="/api/app.v1.AccountingService/RefreshToken",
+            httponly=True,
+            secure=True,
+            samesite="Strict",
+            max_age=0
+        )
 
-    def _build_cookie(
-        self,
-        name: str, 
-        value: str, 
-        path: str = "/", 
-        httponly: bool = True, 
-        secure: bool = True, 
-        samesite: str = "Strict", 
-        max_age: Optional[int] = None
-    ) -> str:
-        """Generates a perfectly formatted Set-Cookie header string."""
-        cookie = SimpleCookie()
-        cookie[name] = value
-        
-        # SimpleCookie requires lowercase attribute keys
-        cookie[name]["path"] = path
-        cookie[name]["httponly"] = httponly
-        cookie[name]["secure"] = secure
-        cookie[name]["samesite"] = samesite
-        
-        if max_age is not None:
-            cookie[name]["max-age"] = max_age
-            
-        return cookie[name].OutputString()

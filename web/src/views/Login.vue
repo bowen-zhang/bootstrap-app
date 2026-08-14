@@ -45,7 +45,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAccountService } from '@/libs/api'
+import { login } from '@/libs/user'
 
 const router = useRouter()
 const email = ref('')
@@ -53,15 +53,6 @@ const password = ref('')
 const errorMessage = ref('')
 const successMessage = ref('')
 const isSubmitting = ref(false)
-
-function saveCurrentUser(payload: {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-}) {
-  localStorage.setItem('currentUser', JSON.stringify(payload))
-}
 
 async function handleLogin() {
   const trimmedEmail = email.value.trim()
@@ -73,26 +64,10 @@ async function handleLogin() {
     return
   }
 
+  isSubmitting.value = true
+  errorMessage.value = ''
   try {
-    isSubmitting.value = true
-    errorMessage.value = ''
-
-    const response = await getAccountService().login({
-      email: trimmedEmail,
-      password: trimmedPassword,
-    })
-
-    saveCurrentUser({
-      id: response.accountId,
-      email: response.email,
-      firstName: response.firstName,
-      lastName: response.lastName,
-    })
-
-    successMessage.value = 'Login successful.'
-    email.value = ''
-    password.value = ''
-    await router.push('/')
+    await login(trimmedEmail, trimmedPassword);
   } catch (error) {
     successMessage.value = ''
     errorMessage.value = error instanceof Error ? error.message : 'Unable to login.'

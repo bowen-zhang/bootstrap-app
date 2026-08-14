@@ -7,11 +7,13 @@
 
       <template v-if="currentUser">
         <span class="mr-4">Hi, {{ currentUser.firstName }}</span>
+        <v-btn variant="text" @click="logout">Logout</v-btn>
       </template>
 
-      <v-btn variant="text" to="/">Home</v-btn>
-      <v-btn variant="text" to="/signup">Sign up</v-btn>
-      <v-btn variant="text" to="/login">Login</v-btn>
+      <template v-else>
+        <v-btn variant="text" to="/signup">Sign up</v-btn>
+        <v-btn variant="text" to="/login">Login</v-btn>
+      </template>
 
       <v-btn
         class="ml-2"
@@ -27,23 +29,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { currentUser, logout } from '@/libs/user'
 
-type CurrentUser = {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-}
+const router = useRouter();
 
-const currentUser = computed<CurrentUser | null>(() => {
-  const raw = localStorage.getItem('currentUser')
-  if (!raw) return null
-
-  try {
-    return JSON.parse(raw) as CurrentUser
-  } catch {
-    return null
-  }
-})
 </script>
