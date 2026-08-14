@@ -1,17 +1,14 @@
-import uuid
-
 from connectrpc.request import RequestContext
 from fastapi import HTTPException
 
-from protos import api_connect, api_pb2, storage_pb2
+from protos import account_pb2, api_connect, api_pb2
 from services.api import auth_utils
+from services.api.account_storage import account_storage
 from services.api.connectrpc_utils import _get_cookie, _set_cookie
 from shared.settings import settings
 
 
 class AccountService(api_connect.AccountService):
-    _accounts: dict[str, storage_pb2.Account] = {}
-
     async def create(
         self, request: api_pb2.CreateAccountRequest, ctx: RequestContext
     ) -> api_pb2.CreateAccountResponse:
@@ -25,22 +22,20 @@ class AccountService(api_connect.AccountService):
         if not password:
             raise Exception("Password cannot be empty")
 
-        account_id = str(uuid.uuid4())
-        account = storage_pb2.Account(
-            id=account_id,
+        account = account_pb2.Account(
             email=email,
             password=password,
             first_name=first_name,
             last_name=last_name,
         )
-        self._accounts[email] = account
+        account = account_storage.create_account(account)
 
-        self._set_tokens(account_id, ctx)
+        self._set_tokens(account.id, ctx)
         return api_pb2.CreateAccountResponse(
-            account_id=account_id,
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
+            account_id=account.id,
+            email=account.email,
+            first_name=account.first_name,
+            last_name=account.last_name,
         )
 
     async def login(
@@ -49,16 +44,16 @@ class AccountService(api_connect.AccountService):
         email = request.email.strip()
         password = request.password
 
-        account = self._accounts.get(email)
+        account = account_storage.get_by_email(email)
         if account is None:
             raise HTTPException(status_code=401, detail="Invalid email or password")
         if password != account.password:
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
-        self._set_tokens(email, ctx)
+        self._set_tokens(account.id, ctx)
         return api_pb2.LoginResponse(
-            account_id=email,
-            email=email,
+            account_id=account.id,
+            email=account.email,
             first_name=account.first_name,
             last_name=account.last_name,
         )
@@ -100,14 +95,12 @@ class AccountService(api_connect.AccountService):
             ctx,
             name="refresh_token",
             value=auth_utils.create_refresh_token(user_id),
-            path="/api/app.v1.AccountingService/RefreshToken",
+            path="/api/app.v1.AccountService/RefreshToken",
             httponly=True,
             secure=True,
             samesite="Strict",
             max_age=settings.jwt_settings.refresh_token_expiration_seconds
         )
-
-        print(f"Set access_token and refresh_token cookies for user_id: {user_id}")
 
     def _clear_tokens(self, ctx: RequestContext) -> None:
         _set_cookie(
@@ -124,7 +117,7 @@ class AccountService(api_connect.AccountService):
             ctx,
             name="refresh_token",
             value="",
-            path="/api/app.v1.AccountingService/RefreshToken",
+            path="/api/app.v1.AccountService/RefreshToken",
             httponly=True,
             secure=True,
             samesite="Strict",

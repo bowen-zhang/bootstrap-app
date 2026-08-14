@@ -4,6 +4,7 @@ import { AccountService, GreetingService } from "../libs/api_pb";
 
 const transport = createGrpcWebTransport({
   baseUrl: `${window.location.origin}/api`,
+  useBinaryFormat: false,
 });
 
 let greetingService: ReturnType<typeof createClient<typeof GreetingService>> | null = null;

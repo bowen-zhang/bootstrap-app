@@ -4,7 +4,7 @@ from typing import Optional
 
 
 def _get_cookie(ctx: RequestContext, cookie_name: str) -> Optional[str]:
-    raw_cookie_header = ctx.request_headers().get("cookie")
+    raw_cookie_header = ctx.request_headers.get("cookie")
     if not raw_cookie_header:
         return None
 

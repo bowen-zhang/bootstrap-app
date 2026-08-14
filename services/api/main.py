@@ -4,6 +4,7 @@ import fastapi
 import uvicorn
 
 from protos import api_connect, settings_pb2
+from services.api.auth_interceptor import AuthInterceptor
 from shared.settings import settings
 
 try:
@@ -16,8 +17,14 @@ except ImportError:
 
 def create_app():
     app = fastapi.FastAPI()
-    greeting_service_app = api_connect.GreetingServiceASGIApplication(GreetingService())
-    account_service_app = api_connect.AccountServiceASGIApplication(AccountService())
+    greeting_service_app = api_connect.GreetingServiceASGIApplication(
+        GreetingService(),
+        interceptors=[AuthInterceptor()],
+    )
+    account_service_app = api_connect.AccountServiceASGIApplication(
+        AccountService(),
+        interceptors=[AuthInterceptor()],
+    )
     app.mount('/app.v1.GreetingService', greeting_service_app)
     app.mount('/app.v1.AccountService', account_service_app)
     for route in app.routes:

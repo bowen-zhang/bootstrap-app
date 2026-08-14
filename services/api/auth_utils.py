@@ -35,12 +35,12 @@ def validate_refresh_token(token: str) -> dict:
     return _validate_token(token, expected_type="refresh")
 
 
-def _validate_token(token: str, expected_type: str) -> dict:
+def _validate_token(token: str, expected_type: str) -> str:
     try:
         payload = jwt.decode(token, settings.jwt_settings.secret, algorithms=[settings.jwt_settings.algorithm])
         if payload.get("type") != expected_type:
             raise jwt.InvalidTokenError("Invalid token type")
-        return payload
+        return payload.get("sub")
     except jwt.ExpiredSignatureError:
         raise jwt.ExpiredSignatureError(f"{expected_type.capitalize()} token has expired")
     except jwt.InvalidTokenError as e:
