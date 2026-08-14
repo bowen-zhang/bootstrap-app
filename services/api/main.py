@@ -3,7 +3,7 @@ import os
 import fastapi
 import uvicorn
 
-from protos import api_connect
+from protos import api_connect, settings_pb2
 from shared.settings import settings
 
 try:
@@ -32,5 +32,5 @@ if __name__ == "__main__":
         factory=True,
         host="localhost", 
         port = int(os.getenv("PORT", "50051")),
-        reload=settings.is_dev
+        reload=settings.env == settings_pb2.ENV_DEV,
     )

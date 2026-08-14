@@ -4,10 +4,11 @@
       <v-card-title class="text-h5 mb-4">Login</v-card-title>
 
       <v-text-field
-        v-model="username"
-        label="Username"
+        v-model="email"
+        label="Email"
         variant="outlined"
-        prepend-inner-icon="mdi-account"
+        prepend-inner-icon="mdi-email"
+        type="email"
       />
 
       <v-text-field
@@ -47,18 +48,27 @@ import { useRouter } from 'vue-router'
 import { getAccountService } from '@/libs/api'
 
 const router = useRouter()
-const username = ref('')
+const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
 const successMessage = ref('')
 const isSubmitting = ref(false)
 
+function saveCurrentUser(payload: {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+}) {
+  localStorage.setItem('currentUser', JSON.stringify(payload))
+}
+
 async function handleLogin() {
-  const trimmedUsername = username.value.trim()
+  const trimmedEmail = email.value.trim()
   const trimmedPassword = password.value.trim()
 
-  if (!trimmedUsername || !trimmedPassword) {
-    errorMessage.value = 'Username and password are required.'
+  if (!trimmedEmail || !trimmedPassword) {
+    errorMessage.value = 'Email and password are required.'
     successMessage.value = ''
     return
   }
@@ -67,13 +77,20 @@ async function handleLogin() {
     isSubmitting.value = true
     errorMessage.value = ''
 
-    await getAccountService().login({
-      username: trimmedUsername,
+    const response = await getAccountService().login({
+      email: trimmedEmail,
       password: trimmedPassword,
     })
 
+    saveCurrentUser({
+      id: response.accountId,
+      email: response.email,
+      firstName: response.firstName,
+      lastName: response.lastName,
+    })
+
     successMessage.value = 'Login successful.'
-    username.value = ''
+    email.value = ''
     password.value = ''
     await router.push('/')
   } catch (error) {

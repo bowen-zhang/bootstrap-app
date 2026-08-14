@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package app.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message Account {
+    string id = 1;
+    string email = 2;
+    string password = 3;
+
+    string first_name = 10;
+    string last_name = 11;
+
+    google.protobuf.Timestamp created_at = 20;
+    google.protobuf.Timestamp last_accessed_at = 21;
+}

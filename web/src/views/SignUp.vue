@@ -4,10 +4,25 @@
       <v-card-title class="text-h5 mb-4">Sign up</v-card-title>
 
       <v-text-field
-        v-model="username"
-        label="Username"
+        v-model="firstName"
+        label="First Name"
         variant="outlined"
         prepend-inner-icon="mdi-account"
+      />
+
+      <v-text-field
+        v-model="lastName"
+        label="Last Name"
+        variant="outlined"
+        prepend-inner-icon="mdi-account"
+      />
+
+      <v-text-field
+        v-model="email"
+        label="Email"
+        variant="outlined"
+        prepend-inner-icon="mdi-email"
+        type="email"
       />
 
       <v-text-field
@@ -47,18 +62,22 @@ import { useRouter } from 'vue-router'
 import { getAccountService } from '@/libs/api'
 
 const router = useRouter()
-const username = ref('')
+const firstName = ref('')
+const lastName = ref('')
+const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
 const successMessage = ref('')
 const isSubmitting = ref(false)
 
 async function handleSignUp() {
-  const trimmedUsername = username.value.trim()
+  const trimmedFirstName = firstName.value.trim()
+  const trimmedLastName = lastName.value.trim()
+  const trimmedEmail = email.value.trim()
   const trimmedPassword = password.value.trim()
 
-  if (!trimmedUsername || !trimmedPassword) {
-    errorMessage.value = 'Username and password are required.'
+  if (!trimmedFirstName || !trimmedLastName || !trimmedEmail || !trimmedPassword) {
+    errorMessage.value = 'First name, last name, email, and password are required.'
     successMessage.value = ''
     return
   }
@@ -68,12 +87,16 @@ async function handleSignUp() {
     errorMessage.value = ''
 
     await getAccountService().create({
-      username: trimmedUsername,
+      firstName: trimmedFirstName,
+      lastName: trimmedLastName,
+      email: trimmedEmail,
       password: trimmedPassword,
     })
 
     successMessage.value = 'Account created successfully.'
-    username.value = ''
+    firstName.value = ''
+    lastName.value = ''
+    email.value = ''
     password.value = ''
     await router.push('/')
   } catch (error) {

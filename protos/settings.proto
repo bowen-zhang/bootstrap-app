@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package app.v1;
+
+enum Environment {
+    ENV_UNSPECIFIED = 0;
+    ENV_DEV = 1;
+    ENV_PROD = 2;
+}
+message Settings {
+    Environment env = 1;
+
+    JwtSettings jwt_settings = 2;
+}
+
+message JwtSettings {
+    string secret = 1;
+    string algorithm = 2;
+    int32 access_token_expiration_seconds = 3;
+    int32 refresh_token_expiration_seconds = 4;
+}
