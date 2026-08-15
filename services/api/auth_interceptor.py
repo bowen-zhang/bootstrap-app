@@ -16,6 +16,8 @@ from services.api.connectrpc_utils import _get_cookie
 _WHITE_LIST = {
     "app.v1.AccountService/Create",
     "app.v1.AccountService/Login",
+    "app.v1.AccountService/RefreshToken",
+    "app.v1.AccountService/Logout",
 }
 
 
@@ -25,22 +27,14 @@ class AuthInterceptor(UnaryInterceptor):
         if method_key in _WHITE_LIST:
             return await call_next(request, ctx)
 
-        token = _get_cookie(ctx, "access_token")
-        if not token:
-            raise ConnectError(Code.UNAUTHENTICATED, "Missing access token")
-
-        try:
-            account_id = auth_utils.validate_access_token(token)
-        except Exception as exc:
-            raise ConnectError(Code.UNAUTHENTICATED, str(exc)) from exc
-
+        account_id = auth_utils.get_access_token(ctx)
         setattr(ctx, "account_id", account_id)
         return await call_next(request, ctx)
 
 
 def get_account_id(ctx: RequestContext) -> str:
     if not hasattr(ctx, "account_id"):
-        raise ConnectError(Code.UNAUTHENTICATED, "Missing account_id in context")
+        raise ConnectError(code=Code.UNAUTHENTICATED, message="Missing account_id in context")
     return getattr(ctx, "account_id")
 
 
@@ -48,5 +42,5 @@ def get_account(ctx: RequestContext) -> account_pb2.Account:
     account_id = get_account_id(ctx)
     account = account_storage.get_by_id(account_id)
     if account is None:
-        raise ConnectError(Code.UNAUTHENTICATED, "Account not found")
+        raise ConnectError(code=Code.UNAUTHENTICATED, message="Account not found")
     return account

@@ -1,12 +1,94 @@
 import datetime
-import jwt
 
+import jwt
+from connectrpc.code import Code
+from connectrpc.errors import ConnectError
+from connectrpc.request import RequestContext
+
+from services.api.connectrpc_utils import _get_cookie, _set_cookie
 from shared.settings import settings
 
 
-def create_access_token(user_id: str, extra_claims: dict = None) -> str:
+_ACCESS_TOKEN_COOKIE_NAME = "access_token"
+_REFRESH_TOKEN_COOKIE_NAME = "refresh_token"
+_REFRESH_TOKEN_PATH = "/api/app.v1.AccountService/RefreshToken"
+
+
+def set_tokens(ctx: RequestContext, user_id: str) -> None:
+    _set_cookie(
+        ctx,
+        name=_ACCESS_TOKEN_COOKIE_NAME,
+        value=_create_access_token(user_id),
+        path="/",
+        httponly=True,
+        secure=True,
+        samesite="Strict",
+        max_age=settings.jwt_settings.access_token_expiration_seconds,
+    )
+    _set_cookie(
+        ctx,
+        name=_REFRESH_TOKEN_COOKIE_NAME,
+        value=_create_refresh_token(user_id),
+        path=_REFRESH_TOKEN_PATH,
+        httponly=True,
+        secure=True,
+        samesite="Strict",
+        max_age=settings.jwt_settings.refresh_token_expiration_seconds,
+    )
+
+
+def clear_tokens(ctx: RequestContext) -> None:
+    _set_cookie(
+        ctx,
+        name=_ACCESS_TOKEN_COOKIE_NAME,
+        value="",
+        path="/",
+        httponly=True,
+        secure=True,
+        samesite="Strict",
+        max_age=0,
+    )
+    _set_cookie(
+        ctx,
+        name=_REFRESH_TOKEN_COOKIE_NAME,
+        value="",
+        path=_REFRESH_TOKEN_PATH,
+        httponly=True,
+        secure=True,
+        samesite="Strict",
+        max_age=0,
+    )
+
+
+def get_access_token(ctx: RequestContext) -> str:
+    token = _get_cookie(ctx, _ACCESS_TOKEN_COOKIE_NAME)
+    if not token:
+        raise ConnectError(code=Code.UNAUTHENTICATED, message="Access token missing")
+
+    try:
+        account_id = _validate_access_token(token)
+    except Exception as ex:
+        raise ConnectError(code=Code.UNAUTHENTICATED, message=str(ex))
+
+    return account_id
+
+
+def get_refresh_token(ctx: RequestContext) -> str:
+    token = _get_cookie(ctx, _REFRESH_TOKEN_COOKIE_NAME)
+    if not token:
+        raise ConnectError(code=Code.UNAUTHENTICATED, message="Refresh token missing")
+
+    try:
+        account_id = _validate_refresh_token(token)
+    except Exception as ex:
+        raise ConnectError(code=Code.UNAUTHENTICATED, message=str(ex))
+
+    return account_id
+
+
+def _create_access_token(account_id: str, extra_claims: dict = None) -> str:
     payload = {
-        "sub": user_id,  # Subject (User ID)
+        "sub": account_id,  # Subject (User ID)
         "type": "access",
         "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=settings.jwt_settings.access_token_expiration_seconds),
         "iat": datetime.datetime.now(datetime.timezone.utc),
@@ -17,9 +99,9 @@ def create_access_token(user_id: str, extra_claims: dict = None) -> str:
     return jwt.encode(payload, settings.jwt_settings.secret, algorithm=settings.jwt_settings.algorithm)
 
 
-def create_refresh_token(user_id: str) -> str:
+def _create_refresh_token(account_id: str) -> str:
     payload = {
-        "sub": user_id,
+        "sub": account_id,
         "type": "refresh",
         "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=settings.jwt_settings.refresh_token_expiration_seconds),
         "iat": datetime.datetime.now(datetime.timezone.utc),
@@ -27,11 +109,11 @@ def create_refresh_token(user_id: str) -> str:
     return jwt.encode(payload, settings.jwt_settings.secret, algorithm=settings.jwt_settings.algorithm)
 
 
-def validate_access_token(token: str) -> dict:
+def _validate_access_token(token: str) -> str:
     return _validate_token(token, expected_type="access")
 
 
-def validate_refresh_token(token: str) -> dict:
+def _validate_refresh_token(token: str) -> str:
     return _validate_token(token, expected_type="refresh")
 
 
@@ -39,9 +121,9 @@ def _validate_token(token: str, expected_type: str) -> str:
     try:
         payload = jwt.decode(token, settings.jwt_settings.secret, algorithms=[settings.jwt_settings.algorithm])
         if payload.get("type") != expected_type:
-            raise jwt.InvalidTokenError("Invalid token type")
+            raise ConnectError(code=Code.UNAUTHENTICATED, message=f"Invalid {expected_type} token type")
         return payload.get("sub")
     except jwt.ExpiredSignatureError:
-        raise jwt.ExpiredSignatureError(f"{expected_type.capitalize()} token has expired")
+        raise ConnectError(code=Code.UNAUTHENTICATED, message=f"{expected_type.capitalize()} token has expired")
     except jwt.InvalidTokenError as e:
-        raise jwt.InvalidTokenError(f"Invalid {expected_type} token")
+        raise ConnectError(code=Code.UNAUTHENTICATED, message=f"Invalid {expected_type} token")

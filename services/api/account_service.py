@@ -4,8 +4,6 @@ from fastapi import HTTPException
 from protos import account_pb2, api_connect, api_pb2
 from services.api import auth_utils
 from services.api.account_storage import account_storage
-from services.api.connectrpc_utils import _get_cookie, _set_cookie
-from shared.settings import settings
 
 
 class AccountService(api_connect.AccountService):
@@ -22,15 +20,40 @@ class AccountService(api_connect.AccountService):
         if not password:
             raise Exception("Password cannot be empty")
 
-        account = account_pb2.Account(
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-        )
-        account = account_storage.create_account(account)
+        # Check if the account already exists
+        account = account_storage.get_by_email(email)
+        if account is not None:
+            match account.status:
+                case account_pb2.AccountStatus.ACCOUNT_STATUS_ACTIVE:
+                    raise Exception("Account with this email already exists")
+                case account_pb2.AccountStatus.ACCOUNT_STATUS_SUSPENDED:
+                    raise Exception("Account with this email is suspended")
+                case account_pb2.AccountStatus.ACCOUNT_STATUS_DELETED:
+                    # If the account was deleted, we can allow re-creation
+                    account.password = password
+                    account.first_name = first_name
+                    account.last_name = last_name
+                    account.status = account_pb2.AccountStatus.ACCOUNT_STATUS_ACTIVE
+                    account.last_accessed_at.GetCurrentTime()
+                    account.deleted_at.Clear()
+                    account_storage.update(account)
+                case _:
+                    raise Exception("Account with this email has an unknown status")
+        else:
+            # Create a new account
+            account = account_pb2.Account(
+                status=account_pb2.AccountStatus.ACCOUNT_STATUS_ACTIVE,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+            )
+            account.created_at.GetCurrentTime()
+            account.last_accessed_at.GetCurrentTime()
+            account = account_storage.create_account(account)
 
-        self._set_tokens(account.id, ctx)
+        auth_utils.set_tokens(ctx, account.id)
+
         return api_pb2.CreateAccountResponse(
             account_id=account.id,
             email=account.email,
@@ -49,8 +72,14 @@ class AccountService(api_connect.AccountService):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         if password != account.password:
             raise HTTPException(status_code=401, detail="Invalid email or password")
+        if account.status != account_pb2.AccountStatus.ACCOUNT_STATUS_ACTIVE:
+            raise HTTPException(status_code=403, detail="Account is not active")
 
-        self._set_tokens(account.id, ctx)
+        account.last_accessed_at.GetCurrentTime()
+        account_storage.update(account)
+
+        auth_utils.set_tokens(ctx, account.id)
+
         return api_pb2.LoginResponse(
             account_id=account.id,
             email=account.email,
@@ -61,66 +90,22 @@ class AccountService(api_connect.AccountService):
     async def refresh_token(
         self, request: api_pb2.RefreshTokenRequest, ctx: RequestContext
     ) -> api_pb2.RefreshTokenResponse:
-        refresh_token = _get_cookie(ctx, "refresh_token")
-        if not refresh_token:
-            raise HTTPException(status_code=401, detail="Refresh token missing")
+        account_id = auth_utils.get_refresh_token(ctx)
 
-        try:
-            payload = auth_utils.validate_refresh_token(refresh_token)
-        except Exception as ex:
-                raise HTTPException(status_code=401, detail=str(ex))
+        # Validate account
+        account = account_storage.get_by_id(account_id)
+        if account is None:
+            raise HTTPException(status_code=401, detail="Account not found")
+        if account.status != account_pb2.AccountStatus.ACCOUNT_STATUS_ACTIVE:
+            raise HTTPException(status_code=403, detail="Account is not active")
 
-        user_id = payload.get("sub")
-        self._set_tokens(user_id, ctx)
+        auth_utils.set_tokens(ctx, account_id)
+
         return api_pb2.RefreshTokenResponse()
 
     async def logout(
         self, request: api_pb2.LogoutRequest, ctx: RequestContext
     ) -> api_pb2.LogoutResponse:
-        self._clear_tokens(ctx)
+        auth_utils.clear_tokens(ctx)
         return api_pb2.LogoutResponse()
-
-    def _set_tokens(self, user_id: str, ctx: RequestContext) -> None:
-        _set_cookie(
-            ctx,
-            name="access_token",
-            value=auth_utils.create_access_token(user_id),
-            path="/",
-            httponly=True,
-            secure=True,
-            samesite="Strict",
-            max_age=settings.jwt_settings.access_token_expiration_seconds
-        )
-        _set_cookie(
-            ctx,
-            name="refresh_token",
-            value=auth_utils.create_refresh_token(user_id),
-            path="/api/app.v1.AccountService/RefreshToken",
-            httponly=True,
-            secure=True,
-            samesite="Strict",
-            max_age=settings.jwt_settings.refresh_token_expiration_seconds
-        )
-
-    def _clear_tokens(self, ctx: RequestContext) -> None:
-        _set_cookie(
-            ctx,
-            name="access_token",
-            value="",
-            path="/",
-            httponly=True,
-            secure=True,
-            samesite="Strict",
-            max_age=0
-        )
-        _set_cookie(
-            ctx,
-            name="refresh_token",
-            value="",
-            path="/api/app.v1.AccountService/RefreshToken",
-            httponly=True,
-            secure=True,
-            samesite="Strict",
-            max_age=0
-        )
 

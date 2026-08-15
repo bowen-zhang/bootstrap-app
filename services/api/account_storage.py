@@ -12,6 +12,11 @@ class AccountStorage:
         self._accounts[account.email] = account
         return account
 
+    def update(self, account: account_pb2.Account) -> None:
+        if account.email not in self._accounts:
+            raise ValueError("Account does not exist")
+        self._accounts[account.email] = account
+
     def get_by_email(self, email: str) -> account_pb2.Account | None:
         return self._accounts.get(email)
 
