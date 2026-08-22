@@ -1,7 +1,7 @@
 import { ConnectError, Code, createClient, type Interceptor } from "@connectrpc/connect";
 import { createGrpcWebTransport } from "@connectrpc/connect-web";
-import router from "@/router";
 import { AccountService, GreetingService } from "../libs/api_pb";
+import { logout } from "@/libs/user";
 
 let refreshPromise: Promise<void> | null = null;
 
@@ -18,7 +18,7 @@ async function refreshAccessToken() {
     })
     .catch(async (error) => {
       console.log("Failed to refresh access token");
-      await router.push("/login");
+      logout();
       throw error;
     })
     .finally(() => {
