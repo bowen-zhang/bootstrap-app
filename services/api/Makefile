@@ -6,4 +6,4 @@ ROOT_DIR = $(CURRENT_DIR)/../..
 run:
 	echo -ne "\e]0;API server\a"
 	. $(ROOT_DIR)/.venv/bin/activate && \
-		PYTHONPATH=$(ROOT_DIR):$(ROOT_DIR)/protos DEV=1 python3 main.py
+		PYTHONPATH=$(ROOT_DIR):$(ROOT_DIR)/protos python3 main.py

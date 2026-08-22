@@ -13,6 +13,8 @@ _ACCESS_TOKEN_COOKIE_NAME = "access_token"
 _REFRESH_TOKEN_COOKIE_NAME = "refresh_token"
 _REFRESH_TOKEN_PATH = "/api/app.v1.AccountService/RefreshToken"
 
+_jwt_settings = settings.api_service_settings.jwt_settings
+
 
 def set_tokens(ctx: RequestContext, user_id: str) -> None:
     _set_cookie(
@@ -23,7 +25,7 @@ def set_tokens(ctx: RequestContext, user_id: str) -> None:
         httponly=True,
         secure=True,
         samesite="Strict",
-        max_age=settings.jwt_settings.access_token_expiration_seconds,
+        max_age=_jwt_settings.access_token_expiration_seconds,
     )
     _set_cookie(
         ctx,
@@ -33,7 +35,7 @@ def set_tokens(ctx: RequestContext, user_id: str) -> None:
         httponly=True,
         secure=True,
         samesite="Strict",
-        max_age=settings.jwt_settings.refresh_token_expiration_seconds,
+        max_age=_jwt_settings.refresh_token_expiration_seconds,
     )
 
 
@@ -90,23 +92,23 @@ def _create_access_token(account_id: str, extra_claims: dict = None) -> str:
     payload = {
         "sub": account_id,  # Subject (User ID)
         "type": "access",
-        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=settings.jwt_settings.access_token_expiration_seconds),
+        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=_jwt_settings.access_token_expiration_seconds),
         "iat": datetime.datetime.now(datetime.timezone.utc),
     }
     if extra_claims:
         payload.update(extra_claims)
         
-    return jwt.encode(payload, settings.jwt_settings.secret, algorithm=settings.jwt_settings.algorithm)
+    return jwt.encode(payload, _jwt_settings.secret, algorithm=_jwt_settings.algorithm)
 
 
 def _create_refresh_token(account_id: str) -> str:
     payload = {
         "sub": account_id,
         "type": "refresh",
-        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=settings.jwt_settings.refresh_token_expiration_seconds),
+        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=_jwt_settings.refresh_token_expiration_seconds),
         "iat": datetime.datetime.now(datetime.timezone.utc),
     }
-    return jwt.encode(payload, settings.jwt_settings.secret, algorithm=settings.jwt_settings.algorithm)
+    return jwt.encode(payload, _jwt_settings.secret, algorithm=_jwt_settings.algorithm)
 
 
 def _validate_access_token(token: str) -> str:
@@ -119,7 +121,7 @@ def _validate_refresh_token(token: str) -> str:
 
 def _validate_token(token: str, expected_type: str) -> str:
     try:
-        payload = jwt.decode(token, settings.jwt_settings.secret, algorithms=[settings.jwt_settings.algorithm])
+        payload = jwt.decode(token, _jwt_settings.secret, algorithms=[_jwt_settings.algorithm])
         if payload.get("type") != expected_type:
             raise ConnectError(code=Code.UNAUTHENTICATED, message=f"Invalid {expected_type} token type")
         return payload.get("sub")

@@ -1,5 +1,10 @@
-jwt_settings:
-  secret: "[PLACEHOLDER]"
-  algorithm: "HS256"
-  access_token_expiration_seconds: 900        # 15 min
-  refresh_token_expiration_seconds: 604800    # 7 days
+env: "ENVIRONMENT_DEV"
+api_service_settings:
+  port: 50001
+  jwt_settings:
+    secret: "[PLACEHOLDER]"
+    algorithm: "HS256"
+    access_token_expiration_seconds: 900        # 15 min
+    refresh_token_expiration_seconds: 604800    # 7 days
+storage_service_settings:
+  port: 50002

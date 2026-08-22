@@ -14,9 +14,9 @@ setup:
 python:
 	protoc \
 		-I $(PROTO_DIR) \
-		--python_out=$(PY_OUT) \
+		--py_out=$(PY_OUT) \
 		--pyi_out=$(PY_OUT) \
-		--connectrpc_out=protobuf=google:$(PY_OUT) \
+		--connectrpc_out=$(PY_OUT) \
 		$(PROTO_FILES)
 
 connect-js:
@@ -28,7 +28,7 @@ connect-js:
 
 clean:
 	mkdir -p $(PY_OUT)
-	rm -rf $(PY_OUT)/*_pb*.py
+	rm -rf $(PY_OUT)/*_pb*.py*
 	rm -rf $(PY_OUT)/*_connect.py
 	mkdir -p $(JS_OUT)
 	rm -rf $(JS_OUT)/*_pb.ts

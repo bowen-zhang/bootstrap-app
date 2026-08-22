@@ -3,13 +3,19 @@ syntax = "proto3";
 package app.v1;
 
 enum Environment {
-    ENV_UNSPECIFIED = 0;
-    ENV_DEV = 1;
-    ENV_PROD = 2;
+    ENVIRONMENT_UNSPECIFIED = 0;
+    ENVIRONMENT_DEV = 1;
+    ENVIRONMENT_PROD = 2;
 }
 message Settings {
     Environment env = 1;
 
+    ApiServiceSettings api_service_settings = 2;
+    StorageServiceSettings storage_service_settings = 3;
+}
+
+message ApiServiceSettings {
+    int32 port = 1;
     JwtSettings jwt_settings = 2;
 }
 
@@ -18,4 +24,8 @@ message JwtSettings {
     string algorithm = 2;
     int32 access_token_expiration_seconds = 3;
     int32 refresh_token_expiration_seconds = 4;
+}
+
+message StorageServiceSettings {
+    int32 port = 1;
 }

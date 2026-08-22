@@ -7,7 +7,7 @@ from connectrpc.errors import ConnectError
 from connectrpc.interceptor import UnaryInterceptor
 from connectrpc.request import RequestContext
 
-from protos import account_pb2
+from protos import account_pb
 from services.api import auth_utils
 from services.api.account_storage import account_storage
 from services.api.connectrpc_utils import _get_cookie
@@ -38,7 +38,7 @@ def get_account_id(ctx: RequestContext) -> str:
     return getattr(ctx, "account_id")
 
 
-def get_account(ctx: RequestContext) -> account_pb2.Account:
+def get_account(ctx: RequestContext) -> account_pb.Account:
     account_id = get_account_id(ctx)
     account = account_storage.get_by_id(account_id)
     if account is None:

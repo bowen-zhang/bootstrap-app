@@ -3,16 +3,11 @@ import os
 import fastapi
 import uvicorn
 
-from protos import api_connect, settings_pb2
+from protos import api_connect
+from services.api.account_service import AccountService
 from services.api.auth_interceptor import AuthInterceptor
-from shared.settings import settings
-
-try:
-    from .account_service import AccountService
-    from .greeting_service import GreetingService
-except ImportError:
-    from account_service import AccountService
-    from greeting_service import GreetingService
+from services.api.greeting_service import GreetingService
+from shared.settings import settings, is_dev
 
 
 def create_app():
@@ -38,6 +33,6 @@ if __name__ == "__main__":
         "main:create_app",
         factory=True,
         host="localhost", 
-        port = int(os.getenv("PORT", "50051")),
-        reload=settings.env == settings_pb2.ENV_DEV,
+        port = settings.api_service_settings.port,
+        reload=is_dev(),
     )
