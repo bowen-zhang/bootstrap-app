@@ -9,3 +9,11 @@ connectrpc
 fastapi
 pyjwt
 uvicorn
+
+# to run grpc-based services
+connectrpc-reflection
+hypercorn
+
+# for storage service
+pymongo
+sqlalchemy

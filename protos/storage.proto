@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package app.v1;
+
+import "account.proto";
+
+enum SubjectType {
+    SUBJECT_TYPE_UNSPECIFIED = 0;
+    SUBJECT_TYPE_ACCOUNT = 1;
+}
+
+service StorageService {
+  rpc Insert(InsertRequest) returns (InsertResponse) {};
+  rpc Get(GetRequest) returns (GetResponse) {};
+  rpc List(ListRequest) returns (ListResponse) {};
+  rpc Update(UpdateRequest) returns (UpdateResponse) {};
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {};
+  rpc DeleteAll(DeleteAllRequest) returns (DeleteAllResponse) {};
+}
+
+message InsertRequest {
+  oneof subject {
+    Account account = 1;
+  }
+}
+
+message InsertResponse {
+  string id = 1;
+}
+
+message GetRequest {
+  SubjectType subject_type = 1;
+  string id = 2;
+}
+
+message GetResponse {
+  oneof subject {
+    Account account = 1;
+  }
+}
+
+message ListRequest {
+  SubjectType subject_type = 1;
+}
+
+message ListResponse {
+  repeated Account accounts = 1;
+}
+
+message UpdateRequest {
+  oneof subject {
+    Account account = 1;
+  }
+}
+
+message UpdateResponse {
+}
+
+message DeleteRequest {
+  SubjectType subject_type = 1;
+  string id = 2;
+}
+
+message DeleteResponse {
+}
+
+message DeleteAllRequest {
+  SubjectType subject_type = 1;
+}
+
+message DeleteAllResponse {
+    int32 deleted_count = 1;
+}
