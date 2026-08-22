@@ -3,7 +3,7 @@ import os
 import fastapi
 import uvicorn
 
-from protos import api_connect
+from protos import api_connect, storage_connect
 from services.api.account_service import AccountService
 from services.api.auth_interceptor import AuthInterceptor
 from services.api.greeting_service import GreetingService
@@ -11,15 +11,18 @@ from shared.settings import settings, is_dev
 
 
 def create_app():
-    app = fastapi.FastAPI()
+    storage_service_client = storage_connect.StorageServiceClientSync(
+        f"http://127.0.0.1:{settings.storage_service_settings.port}"
+    )
     greeting_service_app = api_connect.GreetingServiceASGIApplication(
-        GreetingService(),
+        GreetingService(storage_service_client),
         interceptors=[AuthInterceptor()],
     )
     account_service_app = api_connect.AccountServiceASGIApplication(
-        AccountService(),
+        AccountService(storage_service_client),
         interceptors=[AuthInterceptor()],
     )
+    app = fastapi.FastAPI()
     app.mount('/app.v1.GreetingService', greeting_service_app)
     app.mount('/app.v1.AccountService', account_service_app)
     for route in app.routes:

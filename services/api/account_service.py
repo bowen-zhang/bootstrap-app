@@ -1,13 +1,15 @@
 from connectrpc.request import RequestContext
 from fastapi import HTTPException
 
-from protobuf import wkt
-from protos import account_pb, api_connect, api_pb
+from protobuf import wkt, Oneof
+from protos import account_pb, api_connect, api_pb, storage_pb
 from services.api import auth_utils
-from services.api.account_storage import account_storage
 
 
 class AccountService(api_connect.AccountService):
+    def __init__(self, storage_service_client):
+        self._storage = storage_service_client
+
     async def create(
         self, request: api_pb.CreateAccountRequest, ctx: RequestContext
     ) -> api_pb.CreateAccountResponse:
@@ -22,7 +24,7 @@ class AccountService(api_connect.AccountService):
             raise Exception("Password cannot be empty")
 
         # Check if the account already exists
-        account = account_storage.get_by_email(email)
+        account = self._find_by_email(email)
         if account is not None:
             match account.status:
                 case account_pb.AccountStatus.ACTIVE:
@@ -36,8 +38,10 @@ class AccountService(api_connect.AccountService):
                     account.last_name = last_name
                     account.status = account_pb.AccountStatus.ACTIVE
                     account.last_accessed_at = wkt.Timestamp().now()
-                    account.deleted_at.Clear()
-                    account_storage.update(account)
+                    account.deleted_at = None
+                    self._storage.update(storage_pb.UpdateRequest(
+                        subject=Oneof("account", account)
+                    ))
                 case _:
                     raise Exception("Account with this email has an unknown status")
         else:
@@ -51,7 +55,10 @@ class AccountService(api_connect.AccountService):
             )
             account.created_at = wkt.Timestamp().now()
             account.last_accessed_at = wkt.Timestamp().now()
-            account = account_storage.create_account(account)
+            result = self._storage.insert(storage_pb.InsertRequest(
+                subject=Oneof("account", account)
+            ))
+            account.id = result.id
 
         auth_utils.set_tokens(ctx, account.id)
 
@@ -68,7 +75,7 @@ class AccountService(api_connect.AccountService):
         email = request.email.strip()
         password = request.password
 
-        account = account_storage.get_by_email(email)
+        account = self._find_by_email(email)
         if account is None:
             raise HTTPException(status_code=401, detail="Invalid email or password")
         if password != account.password:
@@ -77,7 +84,9 @@ class AccountService(api_connect.AccountService):
             raise HTTPException(status_code=403, detail="Account is not active")
 
         account.last_accessed_at = wkt.Timestamp().now()
-        account_storage.update(account)
+        self._storage.update(storage_pb.UpdateRequest(
+            subject=Oneof("account", account)
+        ))
 
         auth_utils.set_tokens(ctx, account.id)
 
@@ -94,7 +103,10 @@ class AccountService(api_connect.AccountService):
         account_id = auth_utils.get_refresh_token(ctx)
 
         # Validate account
-        account = account_storage.get_by_id(account_id)
+        account = self._storage.get(storage_pb.GetRequest(
+            id=account_id,
+            subject_type=storage_pb.SubjectType.ACCOUNT
+        )).subject.value
         if account is None:
             raise HTTPException(status_code=401, detail="Account not found")
         if account.status != account_pb.AccountStatus.ACTIVE:
@@ -109,4 +121,13 @@ class AccountService(api_connect.AccountService):
     ) -> api_pb.LogoutResponse:
         auth_utils.clear_tokens(ctx)
         return api_pb.LogoutResponse()
+
+    def _find_by_email(self, email: str) -> account_pb.Account | None:
+        response = self._storage.list(storage_pb.ListRequest(
+            subject_type=storage_pb.SubjectType.ACCOUNT,
+            filter=Oneof("account_filter", storage_pb.AccountFilter(email=email))
+        ))
+        if response.accounts:
+            return response.accounts[0]
+        return None
 

@@ -69,9 +69,10 @@ class ProtoSqliteTable:
             return None
         return self._deserialize_subject(row.id, row.data)
 
-    def list(self):
+    def list(self, filter_clause: str | None = None, filter_params: dict[str, Any] | None = None) -> list[Any]:
         rows = self._connection.execute(
-            text(f"SELECT id, data FROM {self._table_name} ORDER BY id")
+            text(f"SELECT id, data FROM {self._table_name}" + (f" WHERE {filter_clause}" if filter_clause else "") + " ORDER BY id"),
+            filter_params or {}
         ).fetchall()
         for row in rows:
             yield self._deserialize_subject(row.id, row.data)
@@ -195,7 +196,13 @@ class SQLiteStorageService(storage_connect.StorageService):
 
             response = storage_pb.ListResponse()
             if request.subject_type == storage_pb.SubjectType.ACCOUNT:
-                response.accounts = list(table.list())
+                if request.filter.value:
+                    filter_clause = "email = :email"
+                    filter_params = {"email": request.filter.value.email}
+                else:
+                    filter_clause = None
+                    filter_params = None
+                response.accounts = list(table.list(filter_clause=filter_clause, filter_params=filter_params))
 
             return response
 

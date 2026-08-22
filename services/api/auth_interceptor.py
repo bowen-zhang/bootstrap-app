@@ -7,9 +7,8 @@ from connectrpc.errors import ConnectError
 from connectrpc.interceptor import UnaryInterceptor
 from connectrpc.request import RequestContext
 
-from protos import account_pb
+from protos import account_pb, storage_pb
 from services.api import auth_utils
-from services.api.account_storage import account_storage
 from services.api.connectrpc_utils import _get_cookie
 
 
@@ -38,9 +37,12 @@ def get_account_id(ctx: RequestContext) -> str:
     return getattr(ctx, "account_id")
 
 
-def get_account(ctx: RequestContext) -> account_pb.Account:
+def get_account(storage_service_client, ctx: RequestContext) -> account_pb.Account:
     account_id = get_account_id(ctx)
-    account = account_storage.get_by_id(account_id)
+    account = storage_service_client.get(storage_pb.GetRequest(
+        id=account_id,
+        subject_type=storage_pb.SubjectType.ACCOUNT
+    )).subject.value
     if account is None:
         raise ConnectError(code=Code.UNAUTHENTICATED, message="Account not found")
     return account

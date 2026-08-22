@@ -39,8 +39,15 @@ message GetResponse {
   }
 }
 
+message AccountFilter {
+  string email = 1;
+}
+
 message ListRequest {
   SubjectType subject_type = 1;
+  oneof filter {
+    AccountFilter account_filter = 100;
+  }
 }
 
 message ListResponse {
