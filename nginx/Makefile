@@ -32,7 +32,7 @@ setup-prod: setup
 	sudo systemctl stop nginx
 
 	sudo cp $(CURRENT_DIR)/nginx-prod.conf /etc/nginx/nginx.conf
-	sudo sed -i '' "s|\[PROJECT_DIR\]|$(PROJECT_DIR)|g" /tmp/nginx.conf
+	sudo sed -i '' "s|\[PROJECT_DIR\]|$(PROJECT_DIR)|g" /etc/nginx/nginx.conf
 
 	sudo certbot --non-interactive --agree-tos -m $(ADMIN_EMAIL) --nginx -d $(DOMAIN) -d www.$(DOMAIN)
 	sudo systemctl enable --now certbot-renew.timer
