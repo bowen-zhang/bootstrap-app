@@ -25,6 +25,11 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Settings
+
+1. Add domain name and admin email to settings-template.yaml.
+
+
 ## System Interface
 
 1. Create /protos directory to store all protobuf files for interface definition.

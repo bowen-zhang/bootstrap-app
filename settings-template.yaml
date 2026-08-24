@@ -1,4 +1,6 @@
 env: "ENVIRONMENT_DEV"
+domain: "[PLACEHOLDER]"
+admin_email: "[PLACEHOLDER]"
 api_service_settings:
   port: 50001
   jwt_settings:
