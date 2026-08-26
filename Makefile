@@ -3,27 +3,31 @@ all: build
 ########################
 # SETUP
 #
-# Install Homebrew & Node on Mac first:
+# Mac: Install Homebrew first:
 #   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# EC2: Install git first
+#   sudo dnf install git make -y
 
 prep-mac:
 	brew install protobuf -y
 	brew install python@3.14 -y
 	brew install node -y
 	brew install nginx -y
+	brew install yq -y
 
 prep-ec2:
-	sudo dnf install -y protobuf python3.14 nodejs nginx
+	sudo dnf install -y protobuf python3.14 nodejs nginx yq
 
 setup-common:
 	rm -rf .venv
 	python3.14 -m venv .venv
-	source .venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
+	source .venv/bin/activate && \
+		pip install --upgrade pip && \
+		pip install -r requirements.txt
 
 setup-settings:
 	mkdir -p runtime
 	cp settings-template.yaml runtime/settings.yaml
-	brew install yq
 	yq -i ".api_service_settings.jwt_settings.secret=\"$(shell openssl rand -hex 32)\"" runtime/settings.yaml
 
 setup-dev: prep-mac setup-common setup-settings
