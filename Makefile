@@ -1,6 +1,19 @@
 all: build
 
+########################
 # SETUP
+#
+# Install Homebrew & Node on Mac first:
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+prep-mac:
+	brew install protobuf -y
+	brew install python@3.14 -y
+	brew install node -y
+	brew install nginx -y
+
+prep-ec2:
+	sudo dnf install -y protobuf python3.14 nodejs nginx
 
 setup-common:
 	rm -rf .venv
@@ -13,13 +26,17 @@ setup-settings:
 	brew install yq
 	yq -i ".api_service_settings.jwt_settings.secret=\"$(shell openssl rand -hex 32)\"" runtime/settings.yaml
 
-setup-dev: setup-common setup-settings
+setup-dev: prep-mac setup-common setup-settings
 	yq -i ".env=\"ENVIRONMENT_DEV\"" runtime/settings.yaml
+	make -C protos setup
 	make -C nginx setup-dev
+	make -C web setup
 
-setup-prod: setup-common setup-settings
+setup-prod: prep-ec2 setup-common setup-settings
 	yq -i ".env=\"ENVIRONMENT_PROD\"" runtime/settings.yaml
+	make -C protos setup
 	make -C nginx setup-prod
+	make -C web setup
 
 # BUILD
 
@@ -41,10 +58,10 @@ run-web:
 run-nginx:
 	make -C nginx run
 	
-run-api: build-protos
+run-api:
 	make -C services/api run
 
-run-storage: build-protos
+run-storage:
 	make -C services/storage run
 
 # DEPLOY (prod)

@@ -20,7 +20,7 @@ python:
 		$(PROTO_FILES)
 
 connect-js:
-	protoc \
+	NODE_OPTIONS="--no-warnings" npx protoc \
 		-I $(PROTO_DIR) \
 		--es_out=$(JS_OUT) \
 		--es_opt=target=ts \
@@ -32,3 +32,4 @@ clean:
 	rm -rf $(PY_OUT)/*_connect.py
 	mkdir -p $(JS_OUT)
 	rm -rf $(JS_OUT)/*_pb.ts
+	rm -rf $(JS_OUT)/*_connect.ts

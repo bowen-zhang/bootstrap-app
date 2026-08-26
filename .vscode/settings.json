@@ -1,3 +1,4 @@
 {
-    "terminal.integrated.tabs.title": "${sequence}"
+    "terminal.integrated.tabs.title": "${sequence}",
+    "makefile.configureOnOpen": false
 }

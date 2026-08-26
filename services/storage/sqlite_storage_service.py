@@ -197,7 +197,7 @@ class SQLiteStorageService(storage_connect.StorageService):
             response = storage_pb.ListResponse()
             if request.subject_type == storage_pb.SubjectType.ACCOUNT:
                 if request.filter.value:
-                    filter_clause = "email = :email"
+                    filter_clause = "data->>'$.email' = :email"
                     filter_params = {"email": request.filter.value.email}
                 else:
                     filter_clause = None

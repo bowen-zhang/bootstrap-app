@@ -1,8 +1,6 @@
-import asyncio
-
 from connectrpc_grpcreflect import ServerReflectionASGIApplication, ServerReflectionService
 from hypercorn.config import Config
-from hypercorn.asyncio import serve
+from hypercorn import run
 from starlette.applications import Starlette
 from starlette.routing import Mount
 
@@ -25,5 +23,6 @@ app = Starlette(routes=[
 if __name__ == "__main__":
     config = Config()
     config.bind = [f"127.0.0.1:{settings.storage_service_settings.port}"]
-    config.reload = is_dev()
-    asyncio.run(serve(app, config))
+    config.use_reloader = is_dev()
+    config.application_path = "main:app" 
+    run.run(config)

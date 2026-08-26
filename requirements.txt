@@ -2,6 +2,7 @@ pyyaml
 
 # to build proto
 grpcio-tools
+protoc-gen-py
 protoc-gen-connectrpc
 
 # to run API server
@@ -11,7 +12,7 @@ pyjwt
 uvicorn
 
 # to run grpc-based services
-connectrpc-reflection
+connectrpc-grpcreflect
 hypercorn
 
 # for storage service
