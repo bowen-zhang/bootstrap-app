@@ -19,8 +19,7 @@ prep-mac:
 	brew install yq -y
 
 prep-ec2:
-	sudo dnf install -y protobuf python3.14 nginx yq
-	
+	sudo dnf install -y protobuf-devel python3.14 nginx yq
 
 setup-common:
 	rm -rf .venv

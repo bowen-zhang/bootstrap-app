@@ -1,15 +1,7 @@
-CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-PROJECT_DIR := $(CURRENT_DIR)..
+include ../shared/common.mk
+
 WORKING_DIR := $(PROJECT_DIR)/runtime/services
 
-OS := $(shell uname -s)
-ifeq ($(OS),Darwin)
-    OS_TYPE = MacOS
-    SED_FLAGS="-i.bak"
-else
-    OS_TYPE = Other
-    SED_FLAGS="-i"
-endif
 
 # Build a service file in runtime directory
 # Inputs:

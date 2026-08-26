@@ -1,20 +1,9 @@
-CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-PROJECT_DIR := $(CURRENT_DIR)..
-RUNTIME_DIR := $(PROJECT_DIR)/runtime
+include ../shared/common.mk
+
 WORKING_DIR := $(RUNTIME_DIR)/nginx
-SETTINGS_FILE := $(RUNTIME_DIR)/settings.yaml
 CONF := $(WORKING_DIR)/nginx-dev.conf
 LOG_DIR := $(WORKING_DIR)/logs
 ERR_LOG := $(LOG_DIR)/error.log
-ADMIN_EMAIL := $(shell yq '.admin_email' $(SETTINGS_FILE))
-DOMAIN := $(shell yq '.domain' $(SETTINGS_FILE))
-
-OS := $(shell uname -s)
-ifeq ($(OS),Darwin)
-    SED_FLAGS="-i.bak"
-else
-    SED_FLAGS="-i"
-endif
 
 .PHONY: all run
 
@@ -40,6 +29,7 @@ setup-prod: setup
 
 	sudo cp $(CURRENT_DIR)/nginx-prod.conf /etc/nginx/nginx.conf
 	sudo sed $(SED_FLAGS) "s|\[PROJECT_DIR\]|$(PROJECT_DIR)|g" /etc/nginx/nginx.conf
+	sudo sed $(SED_FLAGS) "s|\[DOMAIN\]|$(DOMAIN) www.$(DOMAIN)|g" /etc/nginx/nginx.conf
 
 	sudo certbot --non-interactive --agree-tos -m $(ADMIN_EMAIL) --nginx -d $(DOMAIN) -d www.$(DOMAIN)
 	sudo systemctl enable --now certbot-renew.timer

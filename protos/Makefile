@@ -1,8 +1,16 @@
+include ../shared/common.mk
+
 PROTO_DIR := .
 PROTO_FILES := $(PROTO_DIR)/*.proto
 
 PY_OUT := .
 JS_OUT := ../web/src/libs
+
+ifeq ($(IS_DEV),true)
+	PYI_OUT := --pyi_out=$(PY_OUT)
+else
+	PYI_OUT :=
+endif
 
 .PHONY: build python connect-js clean
 
@@ -15,7 +23,7 @@ python:
 	protoc \
 		-I $(PROTO_DIR) \
 		--py_out=$(PY_OUT) \
-		--pyi_out=$(PY_OUT) \
+		$(PYI_OUT) \
 		--connectrpc_out=$(PY_OUT) \
 		$(PROTO_FILES)
 
