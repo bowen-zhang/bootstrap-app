@@ -9,6 +9,13 @@ ERR_LOG := $(LOG_DIR)/error.log
 ADMIN_EMAIL := $(shell yq '.admin_email' $(SETTINGS_FILE))
 DOMAIN := $(shell yq '.domain' $(SETTINGS_FILE))
 
+OS := $(shell uname -s)
+ifeq ($(OS),Darwin)
+    SED_FLAGS="-i.bak"
+else
+    SED_FLAGS="-i"
+endif
+
 .PHONY: all run
 
 all: run-dev
@@ -32,7 +39,7 @@ setup-prod: setup
 	sudo systemctl stop nginx
 
 	sudo cp $(CURRENT_DIR)/nginx-prod.conf /etc/nginx/nginx.conf
-	sudo sed -i '' "s|\[PROJECT_DIR\]|$(PROJECT_DIR)|g" /etc/nginx/nginx.conf
+	sudo sed $(SED_FLAGS) "s|\[PROJECT_DIR\]|$(PROJECT_DIR)|g" /etc/nginx/nginx.conf
 
 	sudo certbot --non-interactive --agree-tos -m $(ADMIN_EMAIL) --nginx -d $(DOMAIN) -d www.$(DOMAIN)
 	sudo systemctl enable --now certbot-renew.timer

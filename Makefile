@@ -5,8 +5,11 @@ all: build
 #
 # Mac: Install Homebrew first:
 #   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-# EC2: Install git first
+# EC2: Install git & npm first
 #   sudo dnf install git make -y
+#   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+#   source ~/.bashrc
+#   nvm install --lts
 
 prep-mac:
 	brew install protobuf -y
@@ -16,7 +19,8 @@ prep-mac:
 	brew install yq -y
 
 prep-ec2:
-	sudo dnf install -y protobuf python3.14 nodejs nginx yq
+	sudo dnf install -y protobuf python3.14 nginx yq
+	
 
 setup-common:
 	rm -rf .venv
