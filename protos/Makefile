@@ -20,7 +20,7 @@ setup:
 	npm install
 
 python:
-	protoc \
+	source .venv/bin/activate && protoc \
 		-I $(PROTO_DIR) \
 		--py_out=$(PY_OUT) \
 		$(PYI_OUT) \

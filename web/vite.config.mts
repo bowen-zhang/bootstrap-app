@@ -8,6 +8,7 @@ import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 export default defineConfig({
   build: {
     outDir: '../runtime/web',
+    emptyOutDir: true,
   },
   plugins: [
     Vue({
