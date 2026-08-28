@@ -1,7 +1,8 @@
 env: "ENVIRONMENT_DEV"
-domain: "[PLACEHOLDER]"
-admin_email: "[PLACEHOLDER]"
+domain: "localhost"
+admin_email: ""
 api_service_settings:
+  hostname: "localhost"
   port: 50001
   jwt_settings:
     secret: "[PLACEHOLDER]"
@@ -9,4 +10,5 @@ api_service_settings:
     access_token_expiration_seconds: 900        # 15 min
     refresh_token_expiration_seconds: 604800    # 7 days
 storage_service_settings:
+  hostname: "localhost"
   port: 50002

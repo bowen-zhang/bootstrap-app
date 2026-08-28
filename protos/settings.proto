@@ -18,8 +18,9 @@ message Settings {
 }
 
 message ApiServiceSettings {
-    int32 port = 1;
-    JwtSettings jwt_settings = 2;
+    string hostname = 1;
+    int32 port = 2;
+    JwtSettings jwt_settings = 3;
 }
 
 message JwtSettings {
@@ -30,5 +31,6 @@ message JwtSettings {
 }
 
 message StorageServiceSettings {
-    int32 port = 1;
+    string hostname = 1;
+    int32 port = 2;
 }

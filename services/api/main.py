@@ -12,7 +12,7 @@ from shared.settings import settings, is_dev
 
 def create_app():
     storage_service_client = storage_connect.StorageServiceClientSync(
-        f"http://127.0.0.1:{settings.storage_service_settings.port}"
+        f"http://{settings.storage_service_settings.hostname}:{settings.storage_service_settings.port}"
     )
     greeting_service_app = api_connect.GreetingServiceASGIApplication(
         GreetingService(storage_service_client),
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:create_app",
         factory=True,
-        host="localhost", 
+        host="0.0.0.0",
         port = settings.api_service_settings.port,
         reload=is_dev(),
     )
