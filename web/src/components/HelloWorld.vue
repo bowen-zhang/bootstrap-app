@@ -5,11 +5,13 @@ import { logout } from "../libs/user";
 import { getGreetingService } from "../libs/api"; 
 
 const message = ref("connecting...");
+const userData = ref([]);
 
 const client = getGreetingService();
 client.greet({ name: "Connect" })
   .then((response) => {
     message.value = response.message;
+    userData.value = response.userData;
   })
   .catch((error) => {
     const connectErr = ConnectError.from(error);
@@ -24,5 +26,6 @@ client.greet({ name: "Connect" })
   <section id="center">
     <h1>Test App</h1>
     <div>{{ message }}</div> 
+    <div>This is your {{ userData.length }} visits.</div>
   </section>
 </template>

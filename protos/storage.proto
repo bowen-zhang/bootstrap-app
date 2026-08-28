@@ -3,10 +3,12 @@ syntax = "proto3";
 package app.v1;
 
 import "account.proto";
+import "user_data.proto";
 
 enum SubjectType {
     SUBJECT_TYPE_UNSPECIFIED = 0;
     SUBJECT_TYPE_ACCOUNT = 1;
+    SUBJECT_TYPE_USER_DATA = 2;
 }
 
 service StorageService {
@@ -21,6 +23,7 @@ service StorageService {
 message InsertRequest {
   oneof subject {
     Account account = 1;
+    UserData user_data = 2;
   }
 }
 
@@ -31,11 +34,13 @@ message InsertResponse {
 message GetRequest {
   SubjectType subject_type = 1;
   string id = 2;
+  string user_id = 3;
 }
 
 message GetResponse {
   oneof subject {
     Account account = 1;
+    UserData user_data = 2;
   }
 }
 
@@ -45,6 +50,7 @@ message AccountFilter {
 
 message ListRequest {
   SubjectType subject_type = 1;
+  string user_id = 2;
   oneof filter {
     AccountFilter account_filter = 100;
   }
@@ -52,11 +58,13 @@ message ListRequest {
 
 message ListResponse {
   repeated Account accounts = 1;
+  repeated UserData user_data = 2;
 }
 
 message UpdateRequest {
   oneof subject {
     Account account = 1;
+    UserData user_data = 2;
   }
 }
 
@@ -66,13 +74,16 @@ message UpdateResponse {
 message DeleteRequest {
   SubjectType subject_type = 1;
   string id = 2;
+  string user_id = 3;
 }
 
 message DeleteResponse {
+  int32 deleted_count = 1;
 }
 
 message DeleteAllRequest {
   SubjectType subject_type = 1;
+  string user_id = 2;
 }
 
 message DeleteAllResponse {

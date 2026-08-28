@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package app.v1;
 
+import "user_data.proto";
+
 // Account Service
 
 service AccountService {
@@ -56,9 +58,11 @@ service GreetingService {
 }
 
 message GreetRequest {
-  string name = 1;
+  string id = 1;
+  string name = 2;
 }
 
 message GreetResponse {
   string message = 1;
+  repeated UserData user_data = 2;
 }

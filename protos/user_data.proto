@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package app.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message UserData {
+  string id = 1;
+  string user_id = 2;
+  google.protobuf.Timestamp accessed_at = 10;
+}
