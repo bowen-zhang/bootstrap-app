@@ -19,7 +19,7 @@ setup:
 	mkdir -p $(WORKING_DIR)
 
 setup-dev: setup
-	cp $(CURRENT_DIR)/mime.types $(WORKING_DIR)
+	cp ./mime.types $(WORKING_DIR)
 	brew install mkcert nss -y
 	cd $(WORKING_DIR) && \
 		mkcert -install && \
