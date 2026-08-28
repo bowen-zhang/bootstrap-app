@@ -1,0 +1,82 @@
+services:
+  web-bootstrap:
+    container_name: web-bootstrap
+    profiles:
+      - bootstrap
+    build:
+      context: .
+      dockerfile: Dockerfile.web-bootstrap
+    image: ${IMAGE_REGISTRY:-}web-bootstrap:${VERSION}
+    ports:
+      - "80:80"
+    volumes:
+      - ./data/certbot/www:/var/www/certbot:ro
+    restart: unless-stopped
+
+  web-staging:
+    container_name: web-staging
+    profiles:
+      - staging
+    build:
+      context: .
+      dockerfile: Dockerfile.web-staging
+    image: ${IMAGE_REGISTRY:-}web-staging:${VERSION}
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+  
+  web:
+    container_name: web
+    profiles:
+      - prod
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: ${IMAGE_REGISTRY:-}web:${VERSION}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./data/certbot/etc:/etc/letsencrypt:ro
+      - ./data/certbot/www:/var/www/certbot:ro
+    restart: unless-stopped
+
+  certbot:
+    container_name: certbot
+    profiles:
+      - prod
+      - staging
+    image: certbot/certbot:latest
+    volumes:
+      - ./data/certbot/etc:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done'"
+
+  api:
+    container_name: api-service
+    profiles:
+      - prod
+      - staging
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: ${IMAGE_REGISTRY:-}api-service:${VERSION}
+    ports:
+      - "50001:50001"
+    restart: unless-stopped
+
+  storage:
+    container_name: storage-service
+    profiles:
+      - prod
+      - staging
+    build:
+      context: .
+      dockerfile: Dockerfile.storage
+    image: ${IMAGE_REGISTRY:-}storage-service:${VERSION}
+    ports:
+      - "50002:50002"
+    volumes:
+      - ./data/db:/usr/local/app/data/db
+    restart: unless-stopped

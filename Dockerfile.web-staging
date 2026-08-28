@@ -1,0 +1,14 @@
+FROM nginx:stable-alpine
+
+WORKDIR /usr/local/app
+
+ENV SETTINGS_FILE=./runtime/settings.yaml
+
+COPY ./runtime/nginx/localhost+2-key.pem /etc/nginx/
+COPY ./runtime/nginx/localhost+2.pem /etc/nginx/
+COPY ./runtime/nginx/nginx-staging.conf /etc/nginx/nginx.conf
+COPY ./runtime/web /var/www/html
+
+EXPOSE 80 443
+
+CMD ["nginx", "-g", "daemon off;"]

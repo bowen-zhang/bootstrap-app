@@ -3,6 +3,6 @@
 **/__pycache__
 .venv
 protos/*.py*
-web/dist
 web/src/libs/*_pb.ts
 runtime
+data

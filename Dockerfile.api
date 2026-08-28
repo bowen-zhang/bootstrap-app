@@ -1,0 +1,21 @@
+FROM python:3.14-slim
+
+ENV APP_DIR=/usr/local/app
+ENV PYTHONPATH=$APP_DIR:$APP_DIR/protos
+
+WORKDIR $APP_DIR
+
+COPY ./requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY ./protos ./protos
+COPY ./shared ./shared
+COPY ./services/api ./services/api
+COPY ./runtime/settings-prod.yaml ./runtime/settings.yaml
+
+EXPOSE 50001
+
+RUN useradd app
+USER app
+
+CMD ["python3", "services/api/main.py"]
