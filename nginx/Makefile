@@ -1,13 +1,16 @@
 include ../shared/common.mk
 
+PROD_SETTINGS_FILE := $(RUNTIME_DIR)/settings-prod.yaml
 WORKING_DIR := $(RUNTIME_DIR)/nginx
-CONF := $(WORKING_DIR)/nginx-dev.conf
 LOG_DIR := $(WORKING_DIR)/logs
 ERR_LOG := $(LOG_DIR)/error.log
+DOMAIN := $(shell yq '.domain' $(PROD_SETTINGS_FILE))
+API_HOSTNAME := $(shell yq '.api_service_settings.hostname' $(PROD_SETTINGS_FILE))
+API_PORT := $(shell yq '.api_service_settings.port' $(PROD_SETTINGS_FILE))
 
 .PHONY: all run
 
-all: run-dev
+all: build
 
 # SETUP
 
@@ -22,22 +25,29 @@ setup-dev: setup
 		mkcert -install && \
 		mkcert localhost 127.0.0.1 ::1
 
-# Setup EC2 instance with nginx, certbot, and SSL certificate
-setup-prod: setup
-	sudo dnf install nginx certbot python3-certbot-nginx -y
-	sudo systemctl stop nginx
+# BUILD
 
-	sudo cp $(CURRENT_DIR)/nginx-prod.conf /etc/nginx/nginx.conf
-	sudo sed $(SED_FLAGS) "s|\[PROJECT_DIR\]|$(PROJECT_DIR)|g" /etc/nginx/nginx.conf
-	sudo sed $(SED_FLAGS) "s|\[DOMAIN\]|$(DOMAIN) www.$(DOMAIN)|g" /etc/nginx/nginx.conf
+clear:
+	rm -rf $(WORKING_DIR)/nginx*.conf
 
-	sudo certbot --non-interactive --agree-tos -m $(ADMIN_EMAIL) --nginx -d $(DOMAIN) -d www.$(DOMAIN)
-	sudo systemctl enable --now certbot-renew.timer
+build: clear
+	@cp nginx*.conf $(WORKING_DIR)
 
-	sudo systemctl enable nginx
-	sudo systemctl start nginx
+	@echo "Building nginx-bootstrap.conf"
+	@sed -i.bak "s|\[DOMAIN\]|$(DOMAIN)|g" $(WORKING_DIR)/nginx-bootstrap.conf
+
+	@echo "Building nginx-staging.conf"
+	@sed -i.bak "s|\[API_HOSTNAME\]|$(API_HOSTNAME)|g" $(WORKING_DIR)/nginx-staging.conf
+	@sed -i.bak "s|\[API_PORT\]|$(API_PORT)|g" $(WORKING_DIR)/nginx-staging.conf
+
+	@echo "Building nginx-prod.conf"
+	@sed -i.bak "s|\[DOMAIN\]|$(DOMAIN)|g" $(WORKING_DIR)/nginx-prod.conf	
+	@sed -i.bak "s|\[API_HOSTNAME\]|$(API_HOSTNAME)|g" $(WORKING_DIR)/nginx-prod.conf
+	@sed -i.bak "s|\[API_PORT\]|$(API_PORT)|g" $(WORKING_DIR)/nginx-prod.conf
+
+	@rm -f $(WORKING_DIR)/*.bak
 
 # RUN (dev)
-run:
-	cp $(CURRENT_DIR)/nginx-dev.conf $(CONF)
-	exec nginx -p $(WORKING_DIR) -e $(ERR_LOG) -c $(CONF) -g 'daemon off;'
+
+run: build
+	exec nginx -p $(WORKING_DIR) -e $(ERR_LOG) -c $(WORKING_DIR)/nginx-dev.conf -g 'daemon off;'
