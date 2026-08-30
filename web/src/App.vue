@@ -30,12 +30,8 @@
 
 <script lang="ts" setup>
 import { useRouter } from 'vue-router'
-import { currentUser, refreshCurrentUser, logout } from '@/libs/user'
+import { currentUser, logout } from '@/libs/user'
 
 const router = useRouter();
-
-if (!currentUser.value) {
-  refreshCurrentUser();
-}
 
 </script>
