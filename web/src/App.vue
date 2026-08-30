@@ -22,7 +22,7 @@
       />
     </v-app-bar>
 
-    <v-main>
+    <v-main class="h-screen">
       <router-view />
     </v-main>
   </v-app>
@@ -30,8 +30,12 @@
 
 <script lang="ts" setup>
 import { useRouter } from 'vue-router'
-import { currentUser, logout } from '@/libs/user'
+import { currentUser, refreshCurrentUser, logout } from '@/libs/user'
 
 const router = useRouter();
+
+if (!currentUser.value) {
+  refreshCurrentUser();
+}
 
 </script>

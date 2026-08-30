@@ -10,17 +10,22 @@ type CurrentUser = {
   lastName: string
 }
 
-function loadCurrentUser(): CurrentUser | null {
-  const raw = localStorage.getItem('currentUser');
-  if (!raw) return null;
+export const currentUser = ref<CurrentUser | null>(null);
 
+export async function refreshCurrentUser(): Promise<void> {
   try {
-    return JSON.parse(raw) as CurrentUser;
-  } catch {
-    return null;
+    const response = await getAccountService().getCurrentUser({});
+    setCurrentUser({
+      id: response.accountId,
+      email: response.email,
+      firstName: response.firstName,
+      lastName: response.lastName,
+    });
+  } catch (error) {
+    console.error('Failed to refresh current user', error);
+    await logout();
   }
 }
-export const currentUser = ref<CurrentUser | null>(loadCurrentUser());
 
 export async function login(email: string, password: string) {
     const response = await getAccountService().login({
@@ -28,13 +33,12 @@ export async function login(email: string, password: string) {
       password,
     });
 
-    currentUser.value = {
+    setCurrentUser({
       id: response.accountId,
       email: response.email,
       firstName: response.firstName,
       lastName: response.lastName,
-    };
-    localStorage.setItem('currentUser', JSON.stringify(currentUser.value));
+    });
     await router.push('/');
 }
 
@@ -44,8 +48,20 @@ export async function logout() {
   } catch (error) {
     console.error('Logout failed', error);
   } finally {
-    currentUser.value = null;
-    localStorage.removeItem('currentUser');
+    clearCurrentUser();
     await router.push('/login');
   }
+}
+
+// Internal functions
+
+function setCurrentUser(user: CurrentUser ): CurrentUser {
+  currentUser.value = user;
+  localStorage.setItem('currentUser', JSON.stringify(user));
+  return user;
+}
+
+function clearCurrentUser() {
+  currentUser.value = null;
+  localStorage.removeItem('currentUser');
 }
