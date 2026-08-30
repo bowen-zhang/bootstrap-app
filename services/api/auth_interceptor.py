@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from typing import Any
+import logging
 
-from connectrpc.code import Code
-from connectrpc.errors import ConnectError
 from connectrpc.interceptor import UnaryInterceptor
 from connectrpc.request import RequestContext
 
-from protos import account_pb, storage_pb
 from services.api import auth_utils
 from services.api.connectrpc_utils import _get_cookie
 
+
+_TOKEN_REFRESH_METHOD = "app.v1.AccountService/RefreshToken"
 
 _WHITE_LIST = {
     "app.v1.AccountService/Create",
@@ -19,30 +18,22 @@ _WHITE_LIST = {
     "app.v1.AccountService/Logout",
 }
 
+_logger = logging.getLogger(__name__)
+
 
 class AuthInterceptor(UnaryInterceptor):
     async def intercept_unary(self, call_next, request, ctx: RequestContext):
-        method_key = f"{ctx.method.service_name}/{ctx.method.name}"
-        if method_key in _WHITE_LIST:
+        method = f"{ctx.method.service_name}/{ctx.method.name}"
+        if method == _TOKEN_REFRESH_METHOD:
+            account_id = auth_utils.get_refresh_token(ctx)
+            auth_utils.set_account_id(ctx, account_id)
+            return await call_next(request, ctx)    
+        elif method in _WHITE_LIST:
+            _logger.info(f"Skipping auth check for whitelisted method: {method}")
+            return await call_next(request, ctx)
+        else:
+            account_id = auth_utils.get_access_token(ctx)
+            auth_utils.set_account_id(ctx, account_id)
             return await call_next(request, ctx)
 
-        account_id = auth_utils.get_access_token(ctx)
-        setattr(ctx, "account_id", account_id)
-        return await call_next(request, ctx)
 
-
-def get_account_id(ctx: RequestContext) -> str:
-    if not hasattr(ctx, "account_id"):
-        raise ConnectError(code=Code.UNAUTHENTICATED, message="Missing account_id in context")
-    return getattr(ctx, "account_id")
-
-
-def get_account(storage_service_client, ctx: RequestContext) -> account_pb.Account:
-    account_id = get_account_id(ctx)
-    account = storage_service_client.get(storage_pb.GetRequest(
-        id=account_id,
-        subject_type=storage_pb.SubjectType.ACCOUNT
-    )).subject.value
-    if account is None:
-        raise ConnectError(code=Code.UNAUTHENTICATED, message="Account not found")
-    return account

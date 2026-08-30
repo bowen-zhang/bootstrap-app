@@ -97,23 +97,22 @@ class AccountService(api_connect.AccountService):
             last_name=account.last_name,
         )
 
+    async def get_current_user(
+        self, request: api_pb.GetCurrentUserRequest, ctx: RequestContext
+    ) -> api_pb.GetCurrentUserResponse:
+        account = auth_utils.get_account(self._storage, ctx)
+        return api_pb.GetCurrentUserResponse(
+            account_id=account.id,
+            email=account.email,
+            first_name=account.first_name,
+            last_name=account.last_name,
+        )
+
     async def refresh_token(
         self, request: api_pb.RefreshTokenRequest, ctx: RequestContext
     ) -> api_pb.RefreshTokenResponse:
-        account_id = auth_utils.get_refresh_token(ctx)
-
-        # Validate account
-        account = self._storage.get(storage_pb.GetRequest(
-            id=account_id,
-            subject_type=storage_pb.SubjectType.ACCOUNT
-        )).subject.value
-        if account is None:
-            raise HTTPException(status_code=401, detail="Account not found")
-        if account.status != account_pb.AccountStatus.ACTIVE:
-            raise HTTPException(status_code=403, detail="Account is not active")
-
-        auth_utils.set_tokens(ctx, account_id)
-
+        account = auth_utils.get_account(self._storage, ctx)
+        auth_utils.set_tokens(ctx, account.id)
         return api_pb.RefreshTokenResponse()
 
     async def logout(

@@ -6,7 +6,7 @@ import protobuf.wkt
 from connectrpc.request import RequestContext
 
 from protos import api_connect, api_pb, storage_pb,user_data_pb
-from services.api.auth_interceptor import get_account
+from services.api import auth_utils
 
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class GreetingService(api_connect.GreetingService):
         self, request: api_pb.GreetRequest, ctx: RequestContext
     ) -> api_pb.GreetResponse:
         try:
-            account = get_account(self._storage, ctx)
+            account = auth_utils.get_account(self._storage, ctx)
 
             self._storage.insert(storage_pb.InsertRequest(
                 subject=protobuf.Oneof(

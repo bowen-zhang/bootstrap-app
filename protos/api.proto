@@ -9,6 +9,7 @@ import "user_data.proto";
 service AccountService {
   rpc Create(CreateAccountRequest) returns (CreateAccountResponse) {};
   rpc Login(LoginRequest) returns (LoginResponse) {};
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse) {};
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {};
   rpc Logout(LogoutRequest) returns (LogoutResponse) {};
 }
@@ -33,6 +34,16 @@ message LoginRequest {
 }
 
 message LoginResponse {
+  string account_id = 1;
+  string email = 2;
+  string first_name = 3;
+  string last_name = 4;
+}
+
+message GetCurrentUserRequest {
+}
+
+message GetCurrentUserResponse {
   string account_id = 1;
   string email = 2;
   string first_name = 3;

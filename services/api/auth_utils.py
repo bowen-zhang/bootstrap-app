@@ -5,6 +5,7 @@ from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
+from protos import account_pb, storage_pb
 from services.api.connectrpc_utils import _get_cookie, _set_cookie
 from shared.settings import settings
 
@@ -14,6 +15,32 @@ _REFRESH_TOKEN_COOKIE_NAME = "refresh_token"
 _REFRESH_TOKEN_PATH = "/api/app.v1.AccountService/RefreshToken"
 
 _jwt_settings = settings.api_service_settings.jwt_settings
+
+
+_CONTEXT_ACCOUNT_ID_KEY = "account_id"
+
+
+def set_account_id(ctx: RequestContext, account_id: str) -> None:
+    setattr(ctx, _CONTEXT_ACCOUNT_ID_KEY, account_id)
+
+
+def get_account_id(ctx: RequestContext) -> str:
+    if not hasattr(ctx, _CONTEXT_ACCOUNT_ID_KEY):
+        raise ConnectError(code=Code.UNAUTHENTICATED, message="Missing account_id in context")
+    return getattr(ctx, _CONTEXT_ACCOUNT_ID_KEY)
+
+
+def get_account(storage_service_client, ctx: RequestContext) -> account_pb.Account:
+    account_id = get_account_id(ctx)
+    account = storage_service_client.get(storage_pb.GetRequest(
+        id=account_id,
+        subject_type=storage_pb.SubjectType.ACCOUNT
+    )).subject.value
+    if account is None:
+        raise ConnectError(code=Code.UNAUTHENTICATED, message="Account not found")
+    if account.status != account_pb.AccountStatus.ACTIVE:
+        raise ConnectError(code=Code.PERMISSION_DENIED, message="Account is not active")
+    return account
 
 
 def set_tokens(ctx: RequestContext, user_id: str) -> None:
