@@ -1,9 +1,15 @@
+import logging
+
 from connectrpc.request import RequestContext
 from fastapi import HTTPException
 
 from protobuf import wkt, Oneof
 from protos import account_pb, api_connect, api_pb, storage_pb
 from services.api import auth_utils
+from shared import metrics
+
+
+_logger = logging.getLogger(__name__)
 
 
 class AccountService(api_connect.AccountService):
@@ -60,6 +66,15 @@ class AccountService(api_connect.AccountService):
             ))
             account.id = result.id
 
+            # Update metrics
+            metrics.user_signup.increment()
+            total_count = self._storage.count(storage_pb.CountRequest(
+                subject_type=storage_pb.SubjectType.ACCOUNT
+            )).count
+            metrics.user_total.update(total_count)
+
+            _logger.warning(f"NEW-ACCOUNT: id={account.id}, email={account.email}")
+
         auth_utils.set_tokens(ctx, account.id)
 
         return api_pb.CreateAccountResponse(
@@ -87,6 +102,8 @@ class AccountService(api_connect.AccountService):
         self._storage.update(storage_pb.UpdateRequest(
             subject=Oneof("account", account)
         ))
+
+        metrics.user_login.increment()
 
         auth_utils.set_tokens(ctx, account.id)
 

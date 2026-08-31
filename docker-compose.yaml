@@ -1,3 +1,8 @@
+x-logging-options: &default-options
+  awslogs-region: "us-west-2"
+  awslogs-group: "bootstrap-app"
+  awslogs-create-group: "true"
+
 services:
   web-bootstrap:
     container_name: web-bootstrap
@@ -65,6 +70,11 @@ services:
     ports:
       - "50001:50001"
     restart: unless-stopped
+    logging:
+      driver: "awslogs"
+      options:
+        <<: *default-options
+        awslogs-stream: "api-service"
 
   storage:
     container_name: storage-service

@@ -1,3 +1,4 @@
+project_name: "bootstrap-app"
 env: "ENVIRONMENT_DEV"
 domain: "localhost"
 admin_email: ""
