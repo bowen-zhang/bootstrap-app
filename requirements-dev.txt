@@ -1,0 +1,4 @@
+# to build proto
+grpcio-tools
+protoc-gen-py
+protoc-gen-connectrpc

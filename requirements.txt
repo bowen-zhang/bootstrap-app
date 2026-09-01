@@ -1,9 +1,8 @@
 pyyaml
 
-# to build proto
+# proto
+protobuf
 grpcio-tools
-protoc-gen-py
-protoc-gen-connectrpc
 
 # to run API server
 connectrpc
