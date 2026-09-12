@@ -83,13 +83,20 @@ class ProtoSqliteTable:
         for row in rows:
             yield self._deserialize_subject(row.id, row.data)
 
-    def delete(self, filter_clause: str | None = None, filter_params: dict[str, Any] | None = None) -> None:
+    def delete(self, filter_clause: str | None = None, filter_params: dict[str, Any] | None = None) -> int:
         result = self._connection.execute(
             text(f"DELETE FROM {self._table_name}" + (f" WHERE {filter_clause}" if filter_clause else "")),
             filter_params or {},
         )
         self._connection.commit()
         return result.rowcount
+
+    def count(self, filter_clause: str | None = None, filter_params: dict[str, Any] | None = None) -> int:
+        result = self._connection.execute(
+            text(f"SELECT COUNT(*) FROM {self._table_name}" + (f" WHERE {filter_clause}" if filter_clause else "")),
+            filter_params or {},
+        ).scalar()
+        return result or 0
 
     def _deserialize_subject(self, id: str, data: str) -> Any:
         subject_cls = self._subject_class()
@@ -298,6 +305,24 @@ class SQLiteStorageService(storage_connect.StorageService):
 
             count = table.delete(filter_clause=" AND ".join(filter_clauses), filter_params=filter_params)
             return storage_pb.DeleteAllResponse(deleted_count=count)
+
+    async def count(self, request: storage_pb.CountRequest, ctx: Any) -> storage_pb.CountResponse:
+        if not request.subject_type:
+            raise ValueError('Unable to get total count. Subject type is missing.')
+
+        with self._db_manager.get_database() as db:
+            table = db.get_table_by_subject_type(request.subject_type)
+
+            filter_clauses = []
+            filter_params = {}
+            if self._is_user_data_type(table.subject_class):
+                if request.user_id:
+                    filter_clauses.append("data->>'$.userId' = :user_id")
+                    filter_params["user_id"] = request.user_id
+
+            count = table.count(filter_clause=" AND ".join(filter_clauses), filter_params=filter_params)
+
+            return storage_pb.CountResponse(count=count)
 
     @staticmethod
     def _get_subject(request: Any) -> Any:

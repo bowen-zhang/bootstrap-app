@@ -18,6 +18,7 @@ service StorageService {
   rpc Update(UpdateRequest) returns (UpdateResponse) {};
   rpc Delete(DeleteRequest) returns (DeleteResponse) {};
   rpc DeleteAll(DeleteAllRequest) returns (DeleteAllResponse) {};
+  rpc Count(CountRequest) returns (CountResponse) {};
 }
 
 message InsertRequest {
@@ -88,4 +89,13 @@ message DeleteAllRequest {
 
 message DeleteAllResponse {
     int32 deleted_count = 1;
+}
+
+message CountRequest {
+  SubjectType subject_type = 1;
+  string user_id = 2;
+}
+
+message CountResponse {
+  int32 count = 1;
 }
