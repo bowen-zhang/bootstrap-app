@@ -29,10 +29,10 @@ async function refreshAccessToken() {
 }
 
 const whitelist = new Set([
-  "app.v1.AccountService/Create",
-  "app.v1.AccountService/Login",
-  "app.v1.AccountService/RefreshToken",
-  "app.v1.AccountService/Logout",
+  `${AccountService.typeName}/Create`,
+  `${AccountService.typeName}/Login`,
+  `${AccountService.typeName}/RefreshToken`,
+  `${AccountService.typeName}/Logout`,
 ]);
 
 const authInterceptor: Interceptor = (next) => async (req) => {

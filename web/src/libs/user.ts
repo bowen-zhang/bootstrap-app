@@ -24,7 +24,7 @@ export async function login(email: string, password: string) {
       firstName: response.firstName,
       lastName: response.lastName,
     });
-    await router.push('/home');
+    await router.push('/');
 }
 
 export async function logout() {
@@ -34,7 +34,7 @@ export async function logout() {
     console.error('Logout failed', error);
   } finally {
     clearCurrentUser();
-    await router.push('/');
+    await router.push('/login');
   }
 }
 
