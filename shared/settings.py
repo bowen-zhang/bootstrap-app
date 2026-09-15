@@ -26,3 +26,7 @@ settings = _load()
 
 def is_dev():
     return settings.env == settings_pb.Environment.DEV
+
+
+def is_prod():
+    return settings.env == settings_pb.Environment.PROD

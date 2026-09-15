@@ -5,14 +5,15 @@ from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
-from protos import account_pb, storage_pb
+from protos import account_pb, api_connect, storage_pb
 from services.api.connectrpc_utils import _get_cookie, _set_cookie
 from shared.settings import settings
 
 
+_ACCOUNT_SERVICE_FULLNAME = api_connect.AccountServiceASGIApplication.path.fget(None).lstrip("/")
 _ACCESS_TOKEN_COOKIE_NAME = "access_token"
 _REFRESH_TOKEN_COOKIE_NAME = "refresh_token"
-_REFRESH_TOKEN_PATH = "/api/app.v1.AccountService/RefreshToken"
+_REFRESH_TOKEN_PATH = f"/api/{_ACCOUNT_SERVICE_FULLNAME}/RefreshToken"
 
 _jwt_settings = settings.api_service_settings.jwt_settings
 
@@ -87,7 +88,7 @@ def clear_tokens(ctx: RequestContext) -> None:
         samesite="Strict",
         max_age=0,
     )
-
+    
 
 def get_access_token(ctx: RequestContext) -> str:
     token = _get_cookie(ctx, _ACCESS_TOKEN_COOKIE_NAME)
