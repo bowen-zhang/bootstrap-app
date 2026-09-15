@@ -13,7 +13,7 @@ from sqlite_storage_service import ProtoSqliteManager, SQLiteStorageService
 
 # 2. Instantiate the base ASGI application with your service
 BASE_DIR = Path(__file__).resolve().parents[2]
-db_manager = ProtoSqliteManager(BASE_DIR / "data" / "db" / "storage.db")
+db_manager = ProtoSqliteManager(BASE_DIR / "runtime" / "data" / "db" / "storage.db")
 storage_app = storage_connect.StorageServiceASGIApplication(SQLiteStorageService(db_manager))
 
 reflection_app = ServerReflectionASGIApplication(ServerReflectionService(storage_pb.desc()))

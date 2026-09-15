@@ -5,4 +5,3 @@
 protos/*.py*
 web/src/libs/*_pb.ts
 runtime
-data

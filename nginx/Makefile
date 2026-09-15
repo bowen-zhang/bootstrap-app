@@ -20,7 +20,6 @@ setup:
 
 setup-dev: setup
 	cp ./mime.types $(WORKING_DIR)
-	brew install mkcert nss -y
 	cd $(WORKING_DIR) && \
 		mkcert -install && \
 		mkcert localhost 127.0.0.1 ::1

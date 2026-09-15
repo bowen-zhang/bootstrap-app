@@ -7,9 +7,6 @@ VERSION=$(shell git rev-parse --short HEAD)
 
 all: build
 
-test:
-	echo $(FOLDER_NAME)
-
 ########################
 # SETUP
 #
@@ -18,13 +15,17 @@ test:
 #   - Install Docker Desktop: https://www.docker.com/products/docker-desktop/
 #
 
-prep-mac:
+setup-submodules:
+	git submodule update --init --recursive
+
+setup-mac:
 	brew install awscli -y
 	brew install protobuf -y
 	brew install python@3.14 -y
 	brew install node -y
 	brew install nginx -y
 	brew install yq -y
+	brew install mkcert nss -y
 
 setup-common:
 	rm -rf .venv
@@ -39,7 +40,7 @@ setup-settings:
 	cp settings-template.yaml runtime/settings.yaml
 	yq -i ".api_service_settings.jwt_settings.secret=\"$(shell openssl rand -hex 32)\"" runtime/settings.yaml
 
-setup: prep-mac setup-common setup-settings
+setup: setup-submodules setup-mac setup-common setup-settings
 	yq -i ".env=\"ENVIRONMENT_DEV\"" runtime/settings.yaml
 	make -C protos setup
 	make -C nginx setup-dev
@@ -47,6 +48,10 @@ setup: prep-mac setup-common setup-settings
 
 login-aws:
 	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(AWS_ECR_URI)
+
+sync:
+	git pull
+	git submodule update --remote --recursive
 
 # BUILD
 

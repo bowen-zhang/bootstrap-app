@@ -141,12 +141,11 @@ class ProtoSqliteDatabase:
 
 
 class ProtoSqliteManager:
-    def __init__(self, database_path: str = "storage.db"):
-        db_file = Path(database_path)
-        db_file.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(self, database_path: Path):
+        database_path.parent.mkdir(parents=True, exist_ok=True)
 
         self._engine = create_engine(
-            f"sqlite:///{db_file}",
+            f"sqlite:///{database_path}",
             poolclass=StaticPool,
             connect_args={"check_same_thread": False},
         )
@@ -237,7 +236,7 @@ class SQLiteStorageService(storage_connect.StorageService):
 
             response = storage_pb.ListResponse()
             if request.subject_type == storage_pb.SubjectType.ACCOUNT:
-                response.account = data
+                response.accounts = data
             elif request.subject_type == storage_pb.SubjectType.USER_DATA:
                 response.user_data = data
             return response
