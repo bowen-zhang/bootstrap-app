@@ -7,7 +7,7 @@ from starlette.applications import Starlette
 from starlette.routing import Mount
 
 from protos import storage_connect, storage_pb
-from shared.settings import settings, is_dev
+from shared.common import settings, is_dev
 from sqlite_storage_service import ProtoSqliteManager, SQLiteStorageService
 
 

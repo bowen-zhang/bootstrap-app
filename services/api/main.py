@@ -5,7 +5,7 @@ from protos import api_connect, api_pb, storage_connect
 from services.api.account_service import AccountService
 from services.api.auth_interceptor import AuthInterceptor
 from services.api.greeting_service import GreetingService
-from shared.settings import settings, is_dev
+from shared.common import settings, is_dev
 from third_party.bootstrap_utils import app_utils
 
 _logger = logging.getLogger(__name__)

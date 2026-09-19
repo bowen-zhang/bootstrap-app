@@ -7,7 +7,7 @@ from connectrpc.request import RequestContext
 
 from protos import account_pb, api_connect, storage_pb
 from services.api.connectrpc_utils import _get_cookie, _set_cookie
-from shared.settings import settings
+from shared.common import settings
 
 
 _ACCOUNT_SERVICE_FULLNAME = api_connect.AccountServiceASGIApplication.path.fget(None).lstrip("/")

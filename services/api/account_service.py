@@ -6,13 +6,17 @@ from fastapi import HTTPException
 from protobuf import wkt, Oneof
 from protos import account_pb, api_connect, api_pb, storage_pb
 from services.api import auth_utils
-from shared import metrics
+from shared.common import metric_builder
 
 
 _logger = logging.getLogger(__name__)
 
 
 class AccountService(api_connect.AccountService):
+    _user_signup = metric_builder.counter("user_signup")
+    _user_login = metric_builder.counter("user_login")
+    _user_total = metric_builder.gauge("user_total")
+
     def __init__(self, storage_service_client):
         self._storage = storage_service_client
 
@@ -67,11 +71,11 @@ class AccountService(api_connect.AccountService):
             account.id = result.id
 
             # Update metrics
-            metrics.user_signup.increment()
+            self._user_signup.increment()
             total_count = self._storage.count(storage_pb.CountRequest(
                 subject_type=storage_pb.SubjectType.ACCOUNT
             )).count
-            metrics.user_total.update(total_count)
+            self._user_total.update(total_count)
 
             _logger.warning(f"NEW-ACCOUNT: id={account.id}, email={account.email}")
 
@@ -103,7 +107,7 @@ class AccountService(api_connect.AccountService):
             subject=Oneof("account", account)
         ))
 
-        metrics.user_login.increment()
+        self._user_login.increment()
 
         auth_utils.set_tokens(ctx, account.id)
 
