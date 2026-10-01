@@ -60,11 +60,3 @@ deploy: build
 	@echo "For subsequent runs:"
 	@echo "  docker compose --profile prod"
 	@echo
-
-show-docker-commands:
-	@echo export IMAGE_REGISTRY=$(IMAGE_REGISTRY)
-	@echo export VERSION=$(VERSION)
-	@echo docker-compose up -d web
-	@echo docker-compose up -d api
-	@echo docker-compose up -d storage
-

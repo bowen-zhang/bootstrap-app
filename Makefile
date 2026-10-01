@@ -79,3 +79,15 @@ run-api:
 
 run-storage:
 	make -C services/storage run
+
+
+# Staging Test
+
+run-web-docker:
+	cd deploy && IMAGE_REGISTRY=$(IMAGE_REGISTRY) VERSION=$(VERSION) docker-compose up web
+
+run-api-docker:
+	cd deploy && IMAGE_REGISTRY=$(IMAGE_REGISTRY) VERSION=$(VERSION) docker-compose up api
+
+run-storage-docker:
+	cd deploy && IMAGE_REGISTRY=$(IMAGE_REGISTRY) VERSION=$(VERSION) docker-compose up storage

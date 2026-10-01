@@ -9,8 +9,9 @@ COPY ./requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./protos ./protos
-COPY ./shared ./shared
 COPY ./services/api ./services/api
+COPY ./shared ./shared
+COPY ./third_party ./third_party
 COPY ./runtime/settings-prod.yaml ./runtime/settings.yaml
 
 EXPOSE 50001
