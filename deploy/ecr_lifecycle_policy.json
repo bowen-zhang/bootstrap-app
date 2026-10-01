@@ -1,0 +1,28 @@
+{
+  "rules": [
+    {
+      "rulePriority": 1,
+      "selection": {
+        "tagStatus": "untagged",
+        "countType": "sinceImagePushed",
+        "countUnit": "days",
+        "countNumber": 1
+      },
+      "action": {
+        "type": "expire"
+      }
+    },
+    {
+      "rulePriority": 2,
+      "selection": {
+        "tagStatus": "any",
+        "countType": "sinceImagePushed",
+        "countUnit": "days",
+        "countNumber": 3
+      },
+      "action": {
+        "type": "expire"
+      }
+    }
+  ]
+}

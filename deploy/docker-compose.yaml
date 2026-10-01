@@ -9,8 +9,8 @@ services:
     profiles:
       - bootstrap
     build:
-      context: .
-      dockerfile: Dockerfile.web-bootstrap
+      context: ..
+      dockerfile: deploy/Dockerfile.web-bootstrap
     image: ${IMAGE_REGISTRY:-}web-bootstrap:${VERSION}
     ports:
       - "80:80"
@@ -23,8 +23,8 @@ services:
     profiles:
       - staging
     build:
-      context: .
-      dockerfile: Dockerfile.web-staging
+      context: ..
+      dockerfile: deploy/Dockerfile.web-staging
     image: ${IMAGE_REGISTRY:-}web-staging:${VERSION}
     ports:
       - "80:80"
@@ -36,8 +36,8 @@ services:
     profiles:
       - prod
     build:
-      context: .
-      dockerfile: Dockerfile.web
+      context: ..
+      dockerfile: deploy/Dockerfile.web
     image: ${IMAGE_REGISTRY:-}web:${VERSION}
     ports:
       - "80:80"
@@ -64,8 +64,8 @@ services:
       - prod
       - staging
     build:
-      context: .
-      dockerfile: Dockerfile.api
+      context: ..
+      dockerfile: deploy/Dockerfile.api
     image: ${IMAGE_REGISTRY:-}api-service:${VERSION}
     ports:
       - "50001:50001"
@@ -82,8 +82,8 @@ services:
       - prod
       - staging
     build:
-      context: .
-      dockerfile: Dockerfile.storage
+      context: ..
+      dockerfile: deploy/Dockerfile.storage
     image: ${IMAGE_REGISTRY:-}storage-service:${VERSION}
     ports:
       - "50002:50002"

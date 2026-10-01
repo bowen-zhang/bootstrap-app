@@ -1,9 +1,6 @@
-APP_NAME := $(notdir $(CURDIR))
-AWS_ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text)
-AWS_REGION := $(shell aws configure get region)
-AWS_ECR_URI := $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
-IMAGE_REGISTRY := $(AWS_ECR_URI)/$(APP_NAME)
-VERSION=$(shell git rev-parse --short HEAD)
+include shared/common.mk
+
+.PHONY: build
 
 all: build
 
@@ -37,17 +34,20 @@ setup-common:
 
 setup-settings:
 	mkdir -p runtime
-	cp settings-template.yaml runtime/settings.yaml
-	yq -i ".api_service_settings.jwt_settings.secret=\"$(shell openssl rand -hex 32)\"" runtime/settings.yaml
+	if [ ! -e runtime/settings.yaml ]; then \
+		cp settings-template.yaml runtime/settings.yaml && \
+		yq -i ".api_service_settings.jwt_settings.secret=\"$$(openssl rand -hex 32)\"" runtime/settings.yaml; \
+	fi
+	if [ ! -e runtime/settings-prod.yaml ]; then \
+		cp settings-template.yaml runtime/settings-prod.yaml && \
+		yq -i ".env=\"ENVIRONMENT_PROD\" | .api_service_settings.jwt_settings.secret=\"$$(openssl rand -hex 32)\"" runtime/settings-prod.yaml; \
+	fi
 
 setup: setup-submodules setup-mac setup-common setup-settings
 	yq -i ".env=\"ENVIRONMENT_DEV\"" runtime/settings.yaml
 	make -C protos setup
 	make -C nginx setup-dev
 	make -C web setup
-
-login-aws:
-	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(AWS_ECR_URI)
 
 sync:
 	git pull
@@ -61,11 +61,7 @@ build-protos:
 build: build-protos
 	make -C web
 	make -C nginx
-	IMAGE_REGISTRY=$(IMAGE_REGISTRY)/ VERSION=$(VERSION) docker compose \
-		--profile bootstrap \
-		--profile staging \
-		--profile prod \
-		build
+	make -C deploy
 
 # RUN (dev)
 
@@ -83,31 +79,3 @@ run-api:
 
 run-storage:
 	make -C services/storage run
-
-# DEPLOY (prod)
-#   Set IMAGE_REGISTRY environment variable first.
-deploy: build
-	IMAGE_REGISTRY=$(IMAGE_REGISTRY)/ docker push $(IMAGE_REGISTRY)/web-bootstrap:$(VERSION)
-	IMAGE_REGISTRY=$(IMAGE_REGISTRY)/ docker push $(IMAGE_REGISTRY)/web:$(VERSION)
-	IMAGE_REGISTRY=$(IMAGE_REGISTRY)/ docker push $(IMAGE_REGISTRY)/api-service:$(VERSION)
-	IMAGE_REGISTRY=$(IMAGE_REGISTRY)/ docker push $(IMAGE_REGISTRY)/storage-service:$(VERSION)
-	@echo
-	@echo "On AWS, run the following command:"
-	@echo "  export IMAGE_REGISTRY=$(IMAGE_REGISTRY)/"
-	@echo "  export VERSION=$(VERSION)"
-	@echo "  aws ecr get-login-password --region $(AWS_REGION) | docker login \\"
-	@echo "    --username AWS --password-stdin $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com"
-	@echo "  docker compose --profile bootstrap --profile prod pull"
-	@echo
-	@echo "For first time run:"
-	@echo "  docker compose run \\"
-	@echo "    --entrypoint \"certbot certonly --webroot --webroot-path=/var/www/certbot -d $(DOMAIN) --email $(ADMIN_EMAIL) --agree-tos\" \\"
-	@echo "    certbot"
-	@echo
-	@echo "For subsequent runs:"
-	@echo "  docker compose --profile prod"
-	@echo
-
-
-	
-	
