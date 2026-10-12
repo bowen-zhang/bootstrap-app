@@ -1,0 +1,32 @@
+x-logging-options: &default-options
+  awslogs-region: "us-west-2"
+  awslogs-group: "bootstrap-app"
+  awslogs-create-group: "true"
+
+services:
+  web-bootstrap:
+    build: !reset null
+
+  web:
+    build: !reset null
+  
+  certbot:
+    container_name: certbot
+    profiles:
+      - prod
+    image: certbot/certbot:latest
+    volumes:
+      - ${RUNTIME_DIR:-./runtime}/data/certbot/etc:/etc/letsencrypt
+      - ${RUNTIME_DIR:-./runtime}/data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done'"
+
+  api:
+    build: !reset null
+    logging:
+      driver: "awslogs"
+      options:
+        <<: *default-options
+        awslogs-stream: "api-service"
+  
+  storage:
+    build: !reset null

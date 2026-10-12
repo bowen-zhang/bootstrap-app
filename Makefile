@@ -33,18 +33,21 @@ setup-common:
 		pip install -r requirements.txt
 
 setup-settings:
-	mkdir -p runtime
-	if [ ! -e runtime/settings.yaml ]; then \
-		cp settings-template.yaml runtime/settings.yaml && \
-		yq -i ".api_service_settings.jwt_settings.secret=\"$$(openssl rand -hex 32)\"" runtime/settings.yaml; \
+	mkdir -p runtime/config
+	if [ ! -e runtime/config/settings.dev.yaml ]; then \
+		cp settings-template.yaml runtime/config/settings.dev.yaml && \
+		yq -i ".env=\"ENVIRONMENT_DEV\" | .api_service_settings.jwt_settings.secret=\"$$(openssl rand -hex 32)\"" runtime/config/settings.dev.yaml; \
 	fi
-	if [ ! -e runtime/settings-prod.yaml ]; then \
-		cp settings-template.yaml runtime/settings-prod.yaml && \
-		yq -i ".env=\"ENVIRONMENT_PROD\" | .api_service_settings.jwt_settings.secret=\"$$(openssl rand -hex 32)\"" runtime/settings-prod.yaml; \
+	if [ ! -e runtime/config/settings.staging.yaml ]; then \
+		cp settings-template.yaml runtime/config/settings.staging.yaml && \
+		yq -i ".env=\"ENVIRONMENT_DEV\" | .api_service_settings.jwt_settings.secret=\"$$(openssl rand -hex 32)\"" runtime/config/settings.staging.yaml; \
+	fi
+	if [ ! -e runtime/config/settings.prod.yaml ]; then \
+		cp settings-template.yaml runtime/config/settings.prod.yaml && \
+		yq -i ".env=\"ENVIRONMENT_PROD\" | .api_service_settings.jwt_settings.secret=\"$$(openssl rand -hex 32)\"" runtime/config/settings.prod.yaml; \
 	fi
 
 setup: setup-submodules setup-mac setup-common setup-settings
-	yq -i ".env=\"ENVIRONMENT_DEV\"" runtime/settings.yaml
 	make -C protos setup
 	make -C nginx setup-dev
 	make -C web setup

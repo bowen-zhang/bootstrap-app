@@ -1,27 +1,32 @@
-CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-PROJECT_DIR := $(abspath $(CURRENT_DIR)..)
+CURRENT_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+PROJECT_DIR := $(patsubst %/,%,$(dir $(CURRENT_DIR)))
 RUNTIME_DIR := $(PROJECT_DIR)/runtime
+
 APP_NAME := $(notdir $(PROJECT_DIR))
 VERSION=$(shell git rev-parse --short HEAD)
 
-OS := $(shell uname -s)
-ifeq ($(OS),Darwin)
-    SED_FLAGS="-i.bak"
+ifeq ($(OS),Windows_NT)
+    DETECTED_OS := Windows
 else
-    SED_FLAGS="-i"
+	UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Darwin)
+        DETECTED_OS := MacOS
+    endif
+    ifeq ($(UNAME_S),Linux)
+        DETECTED_OS := Linux
+    endif
 endif
 
-SETTINGS_FILE := $(RUNTIME_DIR)/settings.yaml
-ENV := $(shell yq '.env' $(SETTINGS_FILE))
-ADMIN_EMAIL := $(shell yq '.admin_email' $(SETTINGS_FILE))
-DOMAIN := $(shell yq '.domain' $(SETTINGS_FILE))
-
-ifeq ($(ENV),ENVIRONMENT_DEV)
-	IS_DEV := true
-	IS_PROD := false
-else ifeq ($(ENV),ENVIRONMENT_PROD)
-	IS_DEV := false
-	IS_PROD := true
-else
-    $(error "Unknown environment: $(ENV)")
+ifeq ($(DETECTED_OS), Windows)
+	ACTIVATE_VENV := $(PROJECT_DIR)/.venv/Scripts/activate.bat
+	PATH_SEPARATOR := \;
+	NATIVE_SHELL := cmd.exe //c
+else ifeq ($(DETECTED_OS), MacOS)
+	ACTIVATE_VENV := source $(PROJECT_DIR)/.venv/bin/activate
+    SED_FLAGS="-i.bak"
+	PATH_SEPARATOR := :
+else ifeq ($(DETECTED_OS), Linux)
+	ACTIVATE_VENV := source $(PROJECT_DIR)/.venv/bin/activate
+    SED_FLAGS="-i"
+	PATH_SEPARATOR := :
 endif

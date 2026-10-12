@@ -1,6 +1,6 @@
 include ../shared/common.mk
 
-PROD_SETTINGS_FILE := $(RUNTIME_DIR)/settings-prod.yaml
+PROD_SETTINGS_FILE := $(RUNTIME_DIR)/config/settings.prod.yaml
 WORKING_DIR := $(RUNTIME_DIR)/nginx
 LOG_DIR := $(WORKING_DIR)/logs
 ERR_LOG := $(LOG_DIR)/error.log
@@ -34,10 +34,6 @@ build: clear
 
 	@echo "Building nginx-bootstrap.conf"
 	@sed -i.bak "s|\[DOMAIN\]|$(DOMAIN)|g" $(WORKING_DIR)/nginx-bootstrap.conf
-
-	@echo "Building nginx-staging.conf"
-	@sed -i.bak "s|\[API_HOSTNAME\]|$(API_HOSTNAME)|g" $(WORKING_DIR)/nginx-staging.conf
-	@sed -i.bak "s|\[API_PORT\]|$(API_PORT)|g" $(WORKING_DIR)/nginx-staging.conf
 
 	@echo "Building nginx-prod.conf"
 	@sed -i.bak "s|\[DOMAIN\]|$(DOMAIN)|g" $(WORKING_DIR)/nginx-prod.conf	

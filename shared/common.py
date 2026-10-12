@@ -5,7 +5,7 @@ from third_party.bootstrap_utils import metric_utils, settings_utils
 
 
 _DEFAULT_SETTINGS_FILE = os.getenv("SETTINGS_FILE", "settings.yaml")
-_DEFAULT_SETTINGS_PATH = Path(__file__).parent.parent / "runtime" / _DEFAULT_SETTINGS_FILE
+_DEFAULT_SETTINGS_PATH = Path(__file__).parent.parent / "runtime" / "config" / _DEFAULT_SETTINGS_FILE
 
 settings = settings_utils.SettingsLoader(settings_pb.Settings).load(_DEFAULT_SETTINGS_PATH)
 
