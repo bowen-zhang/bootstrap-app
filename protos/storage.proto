@@ -47,6 +47,7 @@ message GetResponse {
 
 message AccountFilter {
   string email = 1;
+  string api_key = 2;
 }
 
 message ListRequest {

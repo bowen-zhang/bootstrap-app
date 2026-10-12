@@ -11,6 +11,7 @@ service AccountService {
   rpc Login(LoginRequest) returns (LoginResponse) {};
   rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse) {};
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {};
+  rpc GetApiKey(GetApiKeyRequest) returns (GetApiKeyResponse) {};
   rpc Logout(LogoutRequest) returns (LogoutResponse) {};
 }
 
@@ -54,6 +55,14 @@ message RefreshTokenRequest {
 }
 
 message RefreshTokenResponse {
+}
+
+message GetApiKeyRequest {
+  bool refresh = 1;
+}
+
+message GetApiKeyResponse {
+  string api_key = 1;
 }
 
 message LogoutRequest {

@@ -227,10 +227,14 @@ class SQLiteStorageService(storage_connect.StorageService):
                 filter_clauses.append("data->>'$.userId' = :user_id")
                 filter_params["user_id"] = request.user_id
 
-            if request.subject_type == storage_pb.SubjectType.ACCOUNT:
-                if request.filter.value:
-                    filter_clauses.append("data->>'$.email' = :email")
-                    filter_params["email"] = request.filter.value.email
+            match request.filter:
+                case Oneof(field="account_filter", value=account_filter):
+                    if account_filter.email:
+                        filter_clauses.append("data->>'$.email' = :email")
+                        filter_params["email"] = account_filter.email
+                    if account_filter.api_key:
+                        filter_clauses.append("data->>'$.apiKey' = :api_key")
+                        filter_params["api_key"] = account_filter.api_key
 
             data = list(table.find_all(filter_clause=" AND ".join(filter_clauses), filter_params=filter_params))
 
