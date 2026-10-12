@@ -7,12 +7,20 @@ enum Environment {
     ENVIRONMENT_DEV = 1;
     ENVIRONMENT_PROD = 2;
 }
+
+enum Observability {
+    OBSERVABILITY_UNSPECIFIED = 0;
+    OBSERVABILITY_LOCAL = 1;
+    OBSERVABILITY_AWS = 2;
+}
+
 message Settings {
     string project_name = 1;
     Environment env = 2;
     string domain = 3;
     string admin_email = 4;
-    reserved 5 to 19;
+    Observability observability = 5;
+    reserved 6 to 19;
     
     ApiServiceSettings api_service_settings = 20;
     StorageServiceSettings storage_service_settings = 21;
