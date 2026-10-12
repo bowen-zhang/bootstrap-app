@@ -258,8 +258,8 @@ class SQLiteStorageService(storage_connect.StorageService):
                 filter_clauses.append("data->>'$.userId' = :user_id")
                 filter_params["user_id"] = subject.user_id
             
-            subject = table.find_one(filter_clause=" AND ".join(filter_clauses), filter_params=filter_params)
-            if not subject:
+            existing_subject = table.find_one(filter_clause=" AND ".join(filter_clauses), filter_params=filter_params)
+            if not existing_subject:
                 raise ValueError('Unable to update data. Subject not found.')
 
             table.save(subject)
