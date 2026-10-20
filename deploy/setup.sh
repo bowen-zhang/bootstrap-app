@@ -37,6 +37,6 @@ docker compose -f docker-compose.yaml -f docker-compose.prod.yaml --profile boot
 
 docker compose up -d web-bootstrap
 docker compose -f docker-compose.yaml -f docker-compose.prod.yaml run \
-	--entrypoint "certbot certonly --webroot --webroot-path=/var/www/certbot -d $(DOMAIN) -d www.$(DOMAIN) --email $(ADMIN_EMAIL) --agree-tos --no-eff-email" \
+	--entrypoint "certbot certonly --webroot --webroot-path=/var/www/certbot -d ${DOMAIN} -d www.${DOMAIN} --email ${ADMIN_EMAIL} --agree-tos --no-eff-email" \
 	certbot
 docker compose down web-bootstrap

@@ -69,15 +69,19 @@ upload: build docker-login-aws
 	done
 
 deploy:
-	if [ -z "$(AWS_HOST)" ]; then \
-		$(error Missing AWS host.) \
+	@if [ -z "$(AWS_HOST)" ]; then \
+		echo "Missing AWS host."; \
+		exit 1; \
 	fi
+
 
 	echo "APP_NAME=$(APP_NAME)" > $(TMPDIR)/.env
 	echo "IMAGE_REGISTRY=$(IMAGE_REGISTRY)" >> $(TMPDIR)/.env
 	echo "VERSION=$(VERSION)" >> $(TMPDIR)/.env
 	echo "AWS_REGION=$(AWS_REGION)" >> $(TMPDIR)/.env
 	echo "AWS_ACCOUNT_ID=$(AWS_ACCOUNT_ID)" >> $(TMPDIR)/.env
+	echo "ADMIN_EMAIL=$(ADMIN_EMAIL)" >> $(TMPDIR)/.env
+	echo "DOMAIN=$(DOMAIN)" >> $(TMPDIR)/.env
 
 	ssh $(AWS_HOST) "mkdir -p ~/${APP_NAME}/runtime/config"
 	ssh $(AWS_HOST) "mkdir -p ~/${APP_NAME}/runtime/db"
