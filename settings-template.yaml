@@ -2,6 +2,7 @@ project_name: "bootstrap-app"
 env: "ENVIRONMENT_DEV"
 domain: "localhost"
 admin_email: ""
+observability: "OBSERVABILITY_LOCAL"
 api_service_settings:
   hostname: "localhost"
   port: 50001

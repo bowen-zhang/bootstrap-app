@@ -78,10 +78,10 @@ run-nginx:
 	make -C nginx run
 	
 run-api:
-	make -C services/api run
+	SETTINGS_FILE=settings.dev.yaml make -C services/api run
 
 run-storage:
-	make -C services/storage run
+	SETTINGS_FILE=settings.dev.yaml make -C services/storage run
 
 
 # Staging Test
