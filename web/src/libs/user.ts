@@ -1,4 +1,3 @@
-import { computed } from 'vue'
 import { getAccountService } from '@/libs/api'
 import router from '@/router'
 import { ref } from 'vue'
@@ -10,7 +9,9 @@ type CurrentUser = {
   lastName: string
 }
 
-export const currentUser = ref<CurrentUser | null>(await initializeCurrentUser());
+export const currentUser = ref<CurrentUser | null>(null);
+
+await initializeCurrentUser();
 
 export async function login(email: string, password: string) {
     const response = await getAccountService().login({
@@ -38,9 +39,24 @@ export async function logout() {
   }
 }
 
+
+export async function refreshCurrentUser() {
+  try {
+    const response = await getAccountService().getCurrentUser({});
+    setCurrentUser({
+      id: response.accountId,
+      email: response.email,
+      firstName: response.firstName,
+      lastName: response.lastName,
+    });
+  } catch (error) {
+    clearCurrentUser();
+  }
+}
+
 // Internal functions
 
-function getCurrentUser(): CurrentUser | null {
+function loadCurrentUser(): CurrentUser | null {
   const raw = localStorage.getItem('currentUser');
   if (!raw)
     return null;
@@ -64,23 +80,12 @@ function clearCurrentUser() {
   localStorage.removeItem('currentUser');
 }
 
-async function initializeCurrentUser(): Promise<CurrentUser | null> {
-  const user = getCurrentUser();
-  if (user) return user;
-
-  return await refreshCurrentUser();
-}
-
-async function refreshCurrentUser(): Promise<CurrentUser | null> {
-  try {
-    const response = await getAccountService().getCurrentUser({});
-    return {
-      id: response.accountId,
-      email: response.email,
-      firstName: response.firstName,
-      lastName: response.lastName,
-    };
-  } catch (error) {
-    return null;
+async function initializeCurrentUser() {
+  const user = loadCurrentUser();
+  if (user) {
+    setCurrentUser(user);
+    return;
+  } else {
+    await refreshCurrentUser();
   }
 }

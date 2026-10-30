@@ -6,20 +6,15 @@
       <v-spacer />
 
       <template v-if="currentUser">
-        <span class="mr-4">Hi, {{ currentUser.firstName }}</span>
-        <v-btn variant="text" @click="logout">Logout</v-btn>
+        <v-btn class="hidden-md-and-up mr-2" icon="mdi-account" to="/settings" />
+        <v-btn class="hidden-sm-and-down" prepend-icon="mdi-account" to="/settings">Hi, {{ currentUser.firstName }}</v-btn>
+        <v-btn icon="mdi-logout" @click="logout" />
       </template>
 
       <template v-else>
         <v-btn variant="text" to="/signup">Sign up</v-btn>
         <v-btn variant="text" to="/login">Login</v-btn>
       </template>
-
-      <v-btn
-        class="ml-2"
-        icon="mdi-theme-light-dark"
-        @click="$vuetify.theme.cycle()"
-      />
     </v-app-bar>
 
     <v-main class="h-screen">

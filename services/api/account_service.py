@@ -116,6 +116,32 @@ class AccountService(api_connect.AccountService):
             last_name=account.last_name,
         )
 
+    async def update(
+        self, request: api_pb.UpdateAccountRequest, ctx: RequestContext
+    ) -> api_pb.UpdateAccountResponse:
+        account = await account_utils.get_account(self._storage, ctx)
+        email = request.email.strip()
+        password = request.password
+        first_name = request.first_name
+        last_name = request.last_name
+
+        if account.email != email:
+            exist_account = await self._find_by_email(email)
+            if exist_account:
+                raise HTTPException(status_code=400, detail="Email is already in use")
+
+        account.email = email
+        if password:
+            account.password = password
+        account.first_name = first_name
+        account.last_name = last_name
+        account.last_accessed_at = wkt.Timestamp().now()
+        await self._storage.update(storage_pb.UpdateRequest(
+            subject=Oneof("account", account)
+        ))
+
+        return api_pb.UpdateAccountResponse()
+
     async def login(
         self, request: api_pb.LoginRequest, ctx: RequestContext
     ) -> api_pb.LoginResponse:
